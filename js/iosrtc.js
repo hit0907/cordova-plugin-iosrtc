@@ -66,6 +66,10 @@ domready(function () {
 	// Let the MediaStream class and the videoElementsHandler share same MediaStreams container.
 	MediaStream.setMediaStreams(mediaStreams);
 	videoElementsHandler(mediaStreams, mediaStreamRenderers);
+
+
+	window.mediaStreams = mediaStreams;
+	window.mediaStreamRenderers = mediaStreamRenderers;
 });
 
 
