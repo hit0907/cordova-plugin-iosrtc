@@ -33,10 +33,6 @@ function MediaStreamRenderer(element) {
 	this.videoWidth = undefined;
 	this.videoHeight = undefined;
 
-
-	// Add by hanhld
-	this.$element = $(element);
-
 	// Private attributes.
 	this.id = randomNumber();
 
@@ -137,10 +133,10 @@ MediaStreamRenderer.prototype.refresh = function () {
 	computedStyle = window.getComputedStyle(this.element);
 
 	// get padding values
-	paddingTop = parseInt(computedStyle.paddingTop) | 0;
-	paddingBottom = parseInt(computedStyle.paddingBottom) | 0;
-	paddingLeft = parseInt(computedStyle.paddingLeft) | 0;
-	paddingRight = parseInt(computedStyle.paddingRight) | 0;
+	//paddingTop = parseInt(computedStyle.paddingTop) | 0;
+	//paddingBottom = parseInt(computedStyle.paddingBottom) | 0;
+	//paddingLeft = parseInt(computedStyle.paddingLeft) | 0;
+	//paddingRight = parseInt(computedStyle.paddingRight) | 0;
 
 	// fix position according to padding
 	//elementLeft += paddingLeft;
@@ -341,27 +337,15 @@ function onEvent(data) {
 	}
 }
 
-// Change by hanhld@inetcloud.vn
+
 function getElementPositionAndSize() {
 
-	var offset = this.$element.offset();
+	var rect = this.element.getBoundingClientRect();
+
 	return {
-		left:   offset.left,
-		top:    offset.top,
-		width:  this.$element.width(),
-		height: this.$element.height()
+		left:   rect.left + this.element.clientLeft,
+		top:    rect.top + this.element.clientTop,
+		width:  this.element.clientWidth,
+		height: this.element.clientHeight
 	};
 }
-
-//
-//function getElementPositionAndSize() {
-//
-//	var rect = this.element.getBoundingClientRect();
-//
-//	return {
-//		left:   rect.left + this.element.clientLeft,
-//		top:    rect.top + this.element.clientTop,
-//		width:  this.element.clientWidth,
-//		height: this.element.clientHeight
-//	};
-//}
