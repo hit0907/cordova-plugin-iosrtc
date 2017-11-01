@@ -33,6 +33,10 @@ function MediaStreamRenderer(element) {
 	this.videoWidth = undefined;
 	this.videoHeight = undefined;
 
+
+	// Add by hanhld
+	this.$element = $(element);
+
 	// Private attributes.
 	this.id = randomNumber();
 
@@ -337,14 +341,27 @@ function onEvent(data) {
 	}
 }
 
-
+// Change by hanhld@inetcloud.vn
 function getElementPositionAndSize() {
-	var rect = this.element.getBoundingClientRect();
 
+	var offset = this.$element.offset();
 	return {
-		left:   rect.left + this.element.clientLeft,
-		top:    rect.top + this.element.clientTop,
-		width:  this.element.clientWidth,
-		height: this.element.clientHeight
+		left:   offset.left,
+		top:    offset.top,
+		width:  this.$element.width(),
+		height: this.$element.height()
 	};
 }
+
+//
+//function getElementPositionAndSize() {
+//
+//	var rect = this.element.getBoundingClientRect();
+//
+//	return {
+//		left:   rect.left + this.element.clientLeft,
+//		top:    rect.top + this.element.clientTop,
+//		width:  this.element.clientWidth,
+//		height: this.element.clientHeight
+//	};
+//}
