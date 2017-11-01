@@ -5,6 +5,9 @@
 module.exports = videoElementsHandler;
 module.exports.observeVideo = observeVideo;
 
+// Export function to release stream assign into video
+module.exports.releaseVideo = releaseMediaStreamRenderer;
+
 
 /**
  * Dependencies.
@@ -135,6 +138,10 @@ function videoElementsHandler(_mediaStreams, _mediaStreamRenderers) {
 	mediaStreams = _mediaStreams;
 	mediaStreamRenderers = _mediaStreamRenderers;
 
+	// Add by hanhld@inetcloud.vn
+	// Prevent domObserver and must be call observeVideo to update video layout
+	return;
+
 	// Search the whole document for already existing HTML video elements and observe them.
 	for (i = 0, len = existingVideos.length; i < len; i++) {
 		video = existingVideos.item(i);
@@ -176,27 +183,34 @@ function observeVideo(video) {
 		handleVideo(video);
 	}
 
+
+	/**
+	 * Add by hanhld@inetcloud.vn
+	 * Prevent observeVideo automatically
+	 * Please use observeVideo to update video view
+	 */
+
 	// Add .src observer to the video element.
-	videoObserver.observe(video, {
-		// Set to true if additions and removals of the target node's child elements (including text
-		// nodes) are to be observed.
-		childList: false,
-		// Set to true if mutations to target's attributes are to be observed.
-		attributes: true,
-		// Set to true if mutations to target's data are to be observed.
-		characterData: false,
-		// Set to true if mutations to not just target, but also target's descendants are to be observed.
-		subtree: false,
-		// Set to true if attributes is set to true and target's attribute value before the mutation
-		// needs to be recorded.
-		attributeOldValue: false,
-		// Set to true if characterData is set to true and target's data before the mutation needs to be
-		// recorded.
-		characterDataOldValue: false,
-		// Set to an array of attribute local names (without namespace) if not all attribute mutations
-		// need to be observed.
-		attributeFilter: ['src', 'srcObject']
-	});
+	//videoObserver.observe(video, {
+	//	// Set to true if additions and removals of the target node's child elements (including text
+	//	// nodes) are to be observed.
+	//	childList: false,
+	//	// Set to true if mutations to target's attributes are to be observed.
+	//	attributes: true,
+	//	// Set to true if mutations to target's data are to be observed.
+	//	characterData: false,
+	//	// Set to true if mutations to not just target, but also target's descendants are to be observed.
+	//	subtree: false,
+	//	// Set to true if attributes is set to true and target's attribute value before the mutation
+	//	// needs to be recorded.
+	//	attributeOldValue: false,
+	//	// Set to true if characterData is set to true and target's data before the mutation needs to be
+	//	// recorded.
+	//	characterDataOldValue: false,
+	//	// Set to an array of attribute local names (without namespace) if not all attribute mutations
+	//	// need to be observed.
+	//	attributeFilter: ['src', 'srcObject']
+	//});
 
 	// Intercept video 'error' events if it's due to the attached MediaStream.
 	video.addEventListener('error', function (event) {
