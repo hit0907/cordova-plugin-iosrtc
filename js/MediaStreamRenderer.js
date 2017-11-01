@@ -143,12 +143,12 @@ MediaStreamRenderer.prototype.refresh = function () {
 	paddingRight = parseInt(computedStyle.paddingRight) | 0;
 
 	// fix position according to padding
-	elementLeft += paddingLeft;
-	elementTop += paddingTop;
+	//elementLeft += paddingLeft;
+	//elementTop += paddingTop;
 
 	// fix width and height according to padding
-	elementWidth -= (paddingLeft + paddingRight);
-	elementHeight -= (paddingTop + paddingBottom);
+	//elementWidth -= (paddingLeft + paddingRight);
+	//elementHeight -= (paddingTop + paddingBottom);
 
 	videoViewWidth = elementWidth;
 	videoViewHeight = elementHeight;
