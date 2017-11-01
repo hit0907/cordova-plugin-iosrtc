@@ -502,6 +502,10 @@ function MediaStreamRenderer(element) {
 	this.videoWidth = undefined;
 	this.videoHeight = undefined;
 
+
+	// Add by hanhld
+	this.$element = $(element);
+
 	// Private attributes.
 	this.id = randomNumber();
 
@@ -788,17 +792,30 @@ function onEvent(data) {
 	}
 }
 
-
+// Change by hanhld@inetcloud.vn
 function getElementPositionAndSize() {
-	var rect = this.element.getBoundingClientRect();
 
+	var offset = this.$element.offset();
 	return {
-		left:   rect.left + this.element.clientLeft,
-		top:    rect.top + this.element.clientTop,
-		width:  this.element.clientWidth,
-		height: this.element.clientHeight
+		left:   offset.left,
+		top:    offset.top,
+		width:  this.$element.width(),
+		height: this.$element.height()
 	};
 }
+
+//
+//function getElementPositionAndSize() {
+//
+//	var rect = this.element.getBoundingClientRect();
+//
+//	return {
+//		left:   rect.left + this.element.clientLeft,
+//		top:    rect.top + this.element.clientTop,
+//		width:  this.element.clientWidth,
+//		height: this.element.clientHeight
+//	};
+//}
 
 },{"./MediaStream":3,"cordova/exec":undefined,"debug":17,"random-number":22,"yaeti":23}],5:[function(_dereq_,module,exports){
 /**
@@ -2731,11 +2748,14 @@ function provideMediaStreamRenderer(video, mediaStreamBlobId) {
 
 
 function releaseMediaStreamRenderer(video) {
+	console.log('Release video', video._iosrtcMediaStreamRendererId);
 	if (!video._iosrtcMediaStreamRendererId) {
 		return;
 	}
 
 	var mediaStreamRenderer = mediaStreamRenderers[video._iosrtcMediaStreamRendererId];
+
+	console.log(mediaStreamRenderer);
 
 	if (mediaStreamRenderer) {
 		delete mediaStreamRenderers[video._iosrtcMediaStreamRendererId];
