@@ -292,6 +292,10 @@ MediaStreamRenderer.prototype.refresh = function () {
 			borderRadius: borderRadius
 		};
 
+		if(this.element.modifyBeforeRefresh){
+			this.element.modifyBeforeRefresh(data);
+		}
+
 		debug('refresh() | [data:%o]', data);
 
 		exec(null, null, 'iosrtcPlugin', 'MediaStreamRenderer_refresh', [this.id, data]);
