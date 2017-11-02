@@ -51,6 +51,9 @@ module.exports = {
 	// Expose a function to handle a video not yet inserted in the DOM.
 	observeVideo:          videoElementsHandler.observeVideo,
 
+	// Release video element has media stream
+	releaseVideo:          videoElementsHandler.releaseVideo,
+
 	// Expose a function to pollute window and naigator namespaces.
 	registerGlobals:       registerGlobals,
 
@@ -66,6 +69,9 @@ domready(function () {
 	// Let the MediaStream class and the videoElementsHandler share same MediaStreams container.
 	MediaStream.setMediaStreams(mediaStreams);
 	videoElementsHandler(mediaStreams, mediaStreamRenderers);
+
+	window.mediaStreams = mediaStreams;
+	window.mediaStreamRenderers = mediaStreamRenderers;
 });
 
 
