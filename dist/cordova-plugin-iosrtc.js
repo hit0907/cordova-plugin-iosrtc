@@ -641,6 +641,8 @@ MediaStreamRenderer.prototype.refresh = function () {
 		borderRadius = Math.min(elementHeight, elementWidth) * borderRadius;
 	}
 
+	console.log(elementPositionAndSize);
+
 	/**
 	 * No video yet, so just update the UIView with the element settings.
 	 */
