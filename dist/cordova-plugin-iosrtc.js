@@ -502,10 +502,6 @@ function MediaStreamRenderer(element) {
 	this.videoWidth = undefined;
 	this.videoHeight = undefined;
 
-
-	// Add by hanhld
-	this.$element = $(element);
-
 	// Private attributes.
 	this.id = randomNumber();
 
@@ -597,9 +593,27 @@ MediaStreamRenderer.prototype.refresh = function () {
 		mirrored,
 		objectFit,
 		clip,
-		borderRadius;
+		borderRadius,
+		paddingTop,
+		paddingBottom,
+		paddingLeft,
+		paddingRight;
 
 	computedStyle = window.getComputedStyle(this.element);
+
+	// get padding values
+	paddingTop = parseInt(computedStyle.paddingTop) | 0;
+	paddingBottom = parseInt(computedStyle.paddingBottom) | 0;
+	paddingLeft = parseInt(computedStyle.paddingLeft) | 0;
+	paddingRight = parseInt(computedStyle.paddingRight) | 0;
+
+	// fix position according to padding
+	elementLeft += paddingLeft;
+	elementTop += paddingTop;
+
+	// fix width and height according to padding
+	elementWidth -= (paddingLeft + paddingRight);
+	elementHeight -= (paddingTop + paddingBottom);
 
 	videoViewWidth = elementWidth;
 	videoViewHeight = elementHeight;
@@ -640,8 +654,6 @@ MediaStreamRenderer.prototype.refresh = function () {
 	if (/%$/.test(borderRadius)) {
 		borderRadius = Math.min(elementHeight, elementWidth) * borderRadius;
 	}
-
-	console.log(elementPositionAndSize);
 
 	/**
 	 * No video yet, so just update the UIView with the element settings.
@@ -794,30 +806,17 @@ function onEvent(data) {
 	}
 }
 
-// Change by hanhld@inetcloud.vn
-function getElementPositionAndSize() {
 
-	var offset = this.$element.offset();
+function getElementPositionAndSize() {
+	var rect = this.element.getBoundingClientRect();
+
 	return {
-		left:   offset.left,
-		top:    offset.top,
-		width:  this.$element.width(),
-		height: this.$element.height()
+		left:   rect.left + this.element.clientLeft,
+		top:    rect.top + this.element.clientTop,
+		width:  this.element.clientWidth,
+		height: this.element.clientHeight
 	};
 }
-
-//
-//function getElementPositionAndSize() {
-//
-//	var rect = this.element.getBoundingClientRect();
-//
-//	return {
-//		left:   rect.left + this.element.clientLeft,
-//		top:    rect.top + this.element.clientTop,
-//		width:  this.element.clientWidth,
-//		height: this.element.clientHeight
-//	};
-//}
 
 },{"./MediaStream":3,"cordova/exec":undefined,"debug":17,"random-number":22,"yaeti":23}],5:[function(_dereq_,module,exports){
 /**
@@ -2507,9 +2506,6 @@ domready(function () {
 	// Let the MediaStream class and the videoElementsHandler share same MediaStreams container.
 	MediaStream.setMediaStreams(mediaStreams);
 	videoElementsHandler(mediaStreams, mediaStreamRenderers);
-
-	window.mediaStreams = mediaStreams;
-	window.mediaStreamRenderers = mediaStreamRenderers;
 });
 
 
@@ -2756,9 +2752,6 @@ function releaseMediaStreamRenderer(video) {
 	}
 
 	var mediaStreamRenderer = mediaStreamRenderers[video._iosrtcMediaStreamRendererId];
-
-	console.log(mediaStreamRenderer);
-
 	if (mediaStreamRenderer) {
 		delete mediaStreamRenderers[video._iosrtcMediaStreamRendererId];
 		mediaStreamRenderer.close();
