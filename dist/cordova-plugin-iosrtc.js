@@ -502,6 +502,10 @@ function MediaStreamRenderer(element) {
 	this.videoWidth = undefined;
 	this.videoHeight = undefined;
 
+
+	// Add by hanhld
+	this.$element = $(element);
+
 	// Private attributes.
 	this.id = randomNumber();
 
@@ -593,27 +597,9 @@ MediaStreamRenderer.prototype.refresh = function () {
 		mirrored,
 		objectFit,
 		clip,
-		borderRadius,
-		paddingTop,
-		paddingBottom,
-		paddingLeft,
-		paddingRight;
+		borderRadius;
 
 	computedStyle = window.getComputedStyle(this.element);
-
-	// get padding values
-	paddingTop = parseInt(computedStyle.paddingTop) | 0;
-	paddingBottom = parseInt(computedStyle.paddingBottom) | 0;
-	paddingLeft = parseInt(computedStyle.paddingLeft) | 0;
-	paddingRight = parseInt(computedStyle.paddingRight) | 0;
-
-	// fix position according to padding
-	elementLeft += paddingLeft;
-	elementTop += paddingTop;
-
-	// fix width and height according to padding
-	elementWidth -= (paddingLeft + paddingRight);
-	elementHeight -= (paddingTop + paddingBottom);
 
 	videoViewWidth = elementWidth;
 	videoViewHeight = elementHeight;
@@ -654,6 +640,8 @@ MediaStreamRenderer.prototype.refresh = function () {
 	if (/%$/.test(borderRadius)) {
 		borderRadius = Math.min(elementHeight, elementWidth) * borderRadius;
 	}
+
+	console.log(elementPositionAndSize);
 
 	/**
 	 * No video yet, so just update the UIView with the element settings.
@@ -806,17 +794,30 @@ function onEvent(data) {
 	}
 }
 
-
+// Change by hanhld@inetcloud.vn
 function getElementPositionAndSize() {
-	var rect = this.element.getBoundingClientRect();
 
+	var offset = this.$element.offset();
 	return {
-		left:   rect.left + this.element.clientLeft,
-		top:    rect.top + this.element.clientTop,
-		width:  this.element.clientWidth,
-		height: this.element.clientHeight
+		left:   offset.left,
+		top:    offset.top,
+		width:  this.$element.width(),
+		height: this.$element.height()
 	};
 }
+
+//
+//function getElementPositionAndSize() {
+//
+//	var rect = this.element.getBoundingClientRect();
+//
+//	return {
+//		left:   rect.left + this.element.clientLeft,
+//		top:    rect.top + this.element.clientTop,
+//		width:  this.element.clientWidth,
+//		height: this.element.clientHeight
+//	};
+//}
 
 },{"./MediaStream":3,"cordova/exec":undefined,"debug":17,"random-number":22,"yaeti":23}],5:[function(_dereq_,module,exports){
 /**
@@ -2488,6 +2489,9 @@ module.exports = {
 	// Expose a function to handle a video not yet inserted in the DOM.
 	observeVideo:          videoElementsHandler.observeVideo,
 
+	// Release video element has media stream
+	releaseVideo:          videoElementsHandler.releaseVideo,
+
 	// Expose a function to pollute window and naigator namespaces.
 	registerGlobals:       registerGlobals,
 
@@ -2503,6 +2507,9 @@ domready(function () {
 	// Let the MediaStream class and the videoElementsHandler share same MediaStreams container.
 	MediaStream.setMediaStreams(mediaStreams);
 	videoElementsHandler(mediaStreams, mediaStreamRenderers);
+
+	window.mediaStreams = mediaStreams;
+	window.mediaStreamRenderers = mediaStreamRenderers;
 });
 
 
@@ -2558,6 +2565,9 @@ function dump() {
 module.exports = videoElementsHandler;
 module.exports.observeVideo = observeVideo;
 
+// Export function to release stream assign into video
+module.exports.releaseVideo = releaseMediaStreamRenderer;
+
 
 /**
  * Dependencies.
@@ -2585,138 +2595,12 @@ var
 	// Dictionary of MediaStreams (provided via module argument).
 	// - key: MediaStream blobId.
 	// - value: MediaStream.
-	mediaStreams,
-
-	// Video element mutation observer.
-	videoObserver = new MutationObserver(function (mutations) {
-		var i, numMutations, mutation, video;
-
-		for (i = 0, numMutations = mutations.length; i < numMutations; i++) {
-			mutation = mutations[i];
-
-			// HTML video element.
-			video = mutation.target;
-
-			// .src or .srcObject removed.
-			if (!video.src && !video.srcObject) {
-				// If this video element was previously handling a MediaStreamRenderer, release it.
-				releaseMediaStreamRenderer(video);
-				continue;
-			}
-
-			handleVideo(video);
-		}
-	}),
-
-	// DOM mutation observer.
-	domObserver = new MutationObserver(function (mutations) {
-		var
-			i, numMutations, mutation,
-			j, numNodes, node;
-
-		for (i = 0, numMutations = mutations.length; i < numMutations; i++) {
-			mutation = mutations[i];
-
-			// Check if there has been addition or deletion of nodes.
-			if (mutation.type !== 'childList') {
-				continue;
-			}
-
-			// Check added nodes.
-			for (j = 0, numNodes = mutation.addedNodes.length; j < numNodes; j++) {
-				node = mutation.addedNodes[j];
-
-				checkNewNode(node);
-			}
-
-			// Check removed nodes.
-			for (j = 0, numNodes = mutation.removedNodes.length; j < numNodes; j++) {
-				node = mutation.removedNodes[j];
-
-				checkRemovedNode(node);
-			}
-		}
-
-		function checkNewNode(node) {
-			var j, childNode;
-
-			if (node.nodeName === 'VIDEO') {
-				debug('new video element added');
-
-				// Avoid same node firing more than once (really, may happen in some cases).
-				if (node._iosrtcVideoHandled) {
-					return;
-				}
-				node._iosrtcVideoHandled = true;
-
-				// Observe changes in the video element.
-				observeVideo(node);
-			} else {
-				for (j = 0; j < node.childNodes.length; j++) {
-					childNode = node.childNodes.item(j);
-
-					checkNewNode(childNode);
-				}
-			}
-		}
-
-		function checkRemovedNode(node) {
-			var j, childNode;
-
-			if (node.nodeName === 'VIDEO') {
-				debug('video element removed');
-
-				// If this video element was previously handling a MediaStreamRenderer, release it.
-				releaseMediaStreamRenderer(node);
-				delete node._iosrtcVideoHandled;
-			} else {
-				for (j = 0; j < node.childNodes.length; j++) {
-					childNode = node.childNodes.item(j);
-
-					checkRemovedNode(childNode);
-				}
-			}
-		}
-	});
+	mediaStreams;
 
 
 function videoElementsHandler(_mediaStreams, _mediaStreamRenderers) {
-	var
-		existingVideos = document.querySelectorAll('video'),
-		i, len, video;
-
 	mediaStreams = _mediaStreams;
 	mediaStreamRenderers = _mediaStreamRenderers;
-
-	// Search the whole document for already existing HTML video elements and observe them.
-	for (i = 0, len = existingVideos.length; i < len; i++) {
-		video = existingVideos.item(i);
-
-		debug('video element found');
-
-		observeVideo(video);
-	}
-
-	// Observe the whole document for additions of new HTML video elements and observe them.
-	domObserver.observe(document, {
-		// Set to true if additions and removals of the target node's child elements (including text nodes) are to
-		// be observed.
-		childList: true,
-		// Set to true if mutations to target's attributes are to be observed.
-		attributes: false,
-		// Set to true if mutations to target's data are to be observed.
-		characterData: false,
-		// Set to true if mutations to not just target, but also target's descendants are to be observed.
-		subtree: true,
-		// Set to true if attributes is set to true and target's attribute value before the mutation needs to be
-		// recorded.
-		attributeOldValue: false,
-		// Set to true if characterData is set to true and target's data before the mutation needs to be recorded.
-		characterDataOldValue: false
-		// Set to an array of attribute local names (without namespace) if not all attribute mutations need to be
-		// observed.
-		// attributeFilter:
-	});
 }
 
 
@@ -2729,27 +2613,6 @@ function observeVideo(video) {
 		handleVideo(video);
 	}
 
-	// Add .src observer to the video element.
-	videoObserver.observe(video, {
-		// Set to true if additions and removals of the target node's child elements (including text
-		// nodes) are to be observed.
-		childList: false,
-		// Set to true if mutations to target's attributes are to be observed.
-		attributes: true,
-		// Set to true if mutations to target's data are to be observed.
-		characterData: false,
-		// Set to true if mutations to not just target, but also target's descendants are to be observed.
-		subtree: false,
-		// Set to true if attributes is set to true and target's attribute value before the mutation
-		// needs to be recorded.
-		attributeOldValue: false,
-		// Set to true if characterData is set to true and target's data before the mutation needs to be
-		// recorded.
-		characterDataOldValue: false,
-		// Set to an array of attribute local names (without namespace) if not all attribute mutations
-		// need to be observed.
-		attributeFilter: ['src', 'srcObject']
-	});
 
 	// Intercept video 'error' events if it's due to the attached MediaStream.
 	video.addEventListener('error', function (event) {
@@ -2887,11 +2750,14 @@ function provideMediaStreamRenderer(video, mediaStreamBlobId) {
 
 
 function releaseMediaStreamRenderer(video) {
+	console.log('Release video', video._iosrtcMediaStreamRendererId);
 	if (!video._iosrtcMediaStreamRendererId) {
 		return;
 	}
 
 	var mediaStreamRenderer = mediaStreamRenderers[video._iosrtcMediaStreamRendererId];
+
+	console.log(mediaStreamRenderer);
 
 	if (mediaStreamRenderer) {
 		delete mediaStreamRenderers[video._iosrtcMediaStreamRendererId];
