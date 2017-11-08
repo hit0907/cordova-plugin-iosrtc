@@ -190,7 +190,6 @@ function provideMediaStreamRenderer(video, mediaStreamBlobId) {
 
 
 function releaseMediaStreamRenderer(video) {
-	console.log('Release video', video._iosrtcMediaStreamRendererId);
 	if (!video._iosrtcMediaStreamRendererId) {
 		return;
 	}
