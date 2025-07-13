@@ -126,6 +126,23 @@ function refreshVideos() {
 	}
 }
 
+function refreshVideo(videoElement) {
+	debug('refreshVideo()');
+
+	if (!videoElement || !videoElement._iosrtcMediaStreamRendererId) {
+		debug('no video element or no MediaStreamRenderer id found, skipping refresh');
+		return;
+	}
+
+	var mediaStreamRenderer = mediaStreamRenderers[videoElement._iosrtcMediaStreamRendererId];
+
+	if (mediaStreamRenderer) {
+		mediaStreamRenderer.refresh();
+	} else {
+		debug('no MediaStreamRenderer found for the video element, skipping refresh');
+	}
+}
+
 function videoElementsHandler(_mediaStreams, _mediaStreamRenderers) {
 	var existingVideos = document.querySelectorAll('video'),
 		i,
@@ -240,6 +257,18 @@ function observeVideo(video) {
 			event.stopImmediatePropagation();
 		}
 	});
+
+	// Track video size changes
+	const resizeObserver = new ResizeObserver(() => refreshVideo(video));
+	resizeObserver.observe(video);
+
+	// Track position changes
+	const intersectionObserver = new IntersectionObserver(() => refreshVideo(video), {
+		// This threshold means the callback will fire for every bit of visibility change.
+		// For performance, you might use a more specific value like [0, 0.5, 1].
+		threshold: Array.from(Array(101).keys(), (i) => i / 100)
+	});
+	intersectionObserver.observe(video);
 }
 
 /**
