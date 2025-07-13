@@ -3,7 +3,7 @@
  * Cordova iOS plugin exposing the full WebRTC W3C JavaScript APIs
  * Copyright 2015-2017 eFace2Face, Inc. (https://eface2face.com)
  * Copyright 2015-2019 BasqueVoIPMafia (https://github.com/BasqueVoIPMafia)
- * Copyright 2017-2023 Cordova-RTC (https://github.com/cordova-rtc)
+ * Copyright 2017-2025 Cordova-RTC (https://github.com/cordova-rtc)
  * License MIT
  */
 
@@ -1460,7 +1460,7 @@ function onEvent(data) {
 }
 
 },{"./EventTarget":2,"cordova/exec":undefined,"debug":23,"random-number":28}],11:[function(_dereq_,module,exports){
-(function (setImmediate){
+(function (setImmediate){(function (){
 /**
  * Expose the RTCDataChannel class.
  */
@@ -1725,7 +1725,7 @@ function onEvent(data) {
 	}
 }
 
-}).call(this,_dereq_("timers").setImmediate)
+}).call(this)}).call(this,_dereq_("timers").setImmediate)
 },{"./EventTarget":2,"cordova/exec":undefined,"debug":23,"random-number":28,"timers":29}],12:[function(_dereq_,module,exports){
 /**
  * Expose the RTCIceCandidate class.
@@ -1915,7 +1915,7 @@ function RTCIceCandidate(data) {
 }
 
 },{}],13:[function(_dereq_,module,exports){
-(function (global){
+(function (global){(function (){
 /**
  * Expose the RTCPeerConnection class.
  */
@@ -2925,7 +2925,7 @@ function onEvent(data) {
 	this.dispatchEvent(event);
 }
 
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+}).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 },{"./Errors":1,"./EventTarget":2,"./MediaStream":5,"./MediaStreamTrack":7,"./RTCDTMFSender":10,"./RTCDataChannel":11,"./RTCIceCandidate":12,"./RTCRtpReceiver":14,"./RTCRtpSender":15,"./RTCRtpTransceiver":16,"./RTCSessionDescription":17,"./RTCStatsReport":18,"cordova/exec":undefined,"debug":23,"random-number":28}],14:[function(_dereq_,module,exports){
 /**
  * Expose the RTCRtpReceiver class.
@@ -3787,7 +3787,7 @@ function getUserMedia(constraints) {
 }
 
 },{"./Errors":1,"./MediaStream":5,"cordova/exec":undefined,"debug":23}],21:[function(_dereq_,module,exports){
-(function (global){
+(function (global){(function (){
 /**
  * Variables.
  */
@@ -4089,7 +4089,7 @@ function dump() {
 	exec(null, null, 'iosrtcPlugin', 'dump', []);
 }
 
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+}).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 },{"./MediaDevices":4,"./MediaStream":5,"./MediaStreamTrack":7,"./RTCIceCandidate":12,"./RTCPeerConnection":13,"./RTCRtpTransceiver":16,"./RTCSessionDescription":17,"./enumerateDevices":19,"./getUserMedia":20,"./videoElementsHandler":22,"cordova/exec":undefined,"debug":23,"domready":25}],22:[function(_dereq_,module,exports){
 /**
  * Expose a function that must be called when the library is loaded.
@@ -4219,6 +4219,23 @@ function refreshVideos() {
 	}
 }
 
+function refreshVideo(videoElement) {
+	debug('refreshVideo()');
+
+	if (!videoElement || !videoElement._iosrtcMediaStreamRendererId) {
+		debug('no video element or no MediaStreamRenderer id found, skipping refresh');
+		return;
+	}
+
+	var mediaStreamRenderer = mediaStreamRenderers[videoElement._iosrtcMediaStreamRendererId];
+
+	if (mediaStreamRenderer) {
+		mediaStreamRenderer.refresh();
+	} else {
+		debug('no MediaStreamRenderer found for the video element, skipping refresh');
+	}
+}
+
 function videoElementsHandler(_mediaStreams, _mediaStreamRenderers) {
 	var existingVideos = document.querySelectorAll('video'),
 		i,
@@ -4333,6 +4350,18 @@ function observeVideo(video) {
 			event.stopImmediatePropagation();
 		}
 	});
+
+	// Track video size changes
+	const resizeObserver = new ResizeObserver(() => refreshVideo(video));
+	resizeObserver.observe(video);
+
+	// Track position changes
+	const intersectionObserver = new IntersectionObserver(() => refreshVideo(video), {
+		// This threshold means the callback will fire for every bit of visibility change.
+		// For performance, you might use a more specific value like [0, 0.5, 1].
+		threshold: Array.from(Array(101).keys(), (i) => i / 100)
+	});
+	intersectionObserver.observe(video);
 }
 
 /**
@@ -4478,19 +4507,28 @@ function releaseMediaStreamRenderer(video) {
 }
 
 },{"./MediaStreamRenderer":6,"debug":23}],23:[function(_dereq_,module,exports){
-(function (process){
+(function (process){(function (){
 /* eslint-env browser */
 
 /**
  * This is the web browser implementation of `debug()`.
  */
 
-exports.log = log;
 exports.formatArgs = formatArgs;
 exports.save = save;
 exports.load = load;
 exports.useColors = useColors;
 exports.storage = localstorage();
+exports.destroy = (() => {
+	let warned = false;
+
+	return () => {
+		if (!warned) {
+			warned = true;
+			console.warn('Instance method `debug.destroy()` is deprecated and no longer does anything. It will be removed in the next major version of `debug`.');
+		}
+	};
+})();
 
 /**
  * Colors.
@@ -4597,14 +4635,17 @@ function useColors() {
 		return false;
 	}
 
+	let m;
+
 	// Is webkit? http://stackoverflow.com/a/16459606/376773
 	// document is undefined in react-native: https://github.com/facebook/react-native/pull/1632
+	// eslint-disable-next-line no-return-assign
 	return (typeof document !== 'undefined' && document.documentElement && document.documentElement.style && document.documentElement.style.WebkitAppearance) ||
 		// Is firebug? http://stackoverflow.com/a/398120/376773
 		(typeof window !== 'undefined' && window.console && (window.console.firebug || (window.console.exception && window.console.table))) ||
 		// Is firefox >= v31?
 		// https://developer.mozilla.org/en-US/docs/Tools/Web_Console#Styling_messages
-		(typeof navigator !== 'undefined' && navigator.userAgent && navigator.userAgent.toLowerCase().match(/firefox\/(\d+)/) && parseInt(RegExp.$1, 10) >= 31) ||
+		(typeof navigator !== 'undefined' && navigator.userAgent && (m = navigator.userAgent.toLowerCase().match(/firefox\/(\d+)/)) && parseInt(m[1], 10) >= 31) ||
 		// Double check webkit in userAgent just in case we are in a worker
 		(typeof navigator !== 'undefined' && navigator.userAgent && navigator.userAgent.toLowerCase().match(/applewebkit\/(\d+)/));
 }
@@ -4651,18 +4692,14 @@ function formatArgs(args) {
 }
 
 /**
- * Invokes `console.log()` when available.
- * No-op when `console.log` is not a "function".
+ * Invokes `console.debug()` when available.
+ * No-op when `console.debug` is not a "function".
+ * If `console.debug` is not available, falls back
+ * to `console.log`.
  *
  * @api public
  */
-function log(...args) {
-	// This hackery is required for IE8/9, where
-	// the `console.log` function doesn't have 'apply'
-	return typeof console === 'object' &&
-		console.log &&
-		console.log(...args);
-}
+exports.log = console.debug || console.log || (() => {});
 
 /**
  * Save `namespaces`.
@@ -4692,7 +4729,7 @@ function save(namespaces) {
 function load() {
 	let r;
 	try {
-		r = exports.storage.getItem('debug');
+		r = exports.storage.getItem('debug') || exports.storage.getItem('DEBUG') ;
 	} catch (error) {
 		// Swallow
 		// XXX (@Qix-) should we be logging these?
@@ -4744,7 +4781,7 @@ formatters.j = function (v) {
 	}
 };
 
-}).call(this,_dereq_('_process'))
+}).call(this)}).call(this,_dereq_('_process'))
 },{"./common":24,"_process":27}],24:[function(_dereq_,module,exports){
 
 /**
@@ -4760,15 +4797,11 @@ function setup(env) {
 	createDebug.enable = enable;
 	createDebug.enabled = enabled;
 	createDebug.humanize = _dereq_('ms');
+	createDebug.destroy = destroy;
 
 	Object.keys(env).forEach(key => {
 		createDebug[key] = env[key];
 	});
-
-	/**
-	* Active `debug` instances.
-	*/
-	createDebug.instances = [];
 
 	/**
 	* The currently active debug mode names, and names to skip.
@@ -4786,7 +4819,7 @@ function setup(env) {
 
 	/**
 	* Selects a color for a debug namespace
-	* @param {String} namespace The namespace string for the for the debug instance to be colored
+	* @param {String} namespace The namespace string for the debug instance to be colored
 	* @return {Number|String} An ANSI color code for the given namespace
 	* @api private
 	*/
@@ -4811,6 +4844,9 @@ function setup(env) {
 	*/
 	function createDebug(namespace) {
 		let prevTime;
+		let enableOverride = null;
+		let namespacesCache;
+		let enabledCache;
 
 		function debug(...args) {
 			// Disabled?
@@ -4840,7 +4876,7 @@ function setup(env) {
 			args[0] = args[0].replace(/%([a-zA-Z%])/g, (match, format) => {
 				// If we encounter an escaped % then don't increase the array index
 				if (match === '%%') {
-					return match;
+					return '%';
 				}
 				index++;
 				const formatter = createDebug.formatters[format];
@@ -4863,31 +4899,36 @@ function setup(env) {
 		}
 
 		debug.namespace = namespace;
-		debug.enabled = createDebug.enabled(namespace);
 		debug.useColors = createDebug.useColors();
-		debug.color = selectColor(namespace);
-		debug.destroy = destroy;
+		debug.color = createDebug.selectColor(namespace);
 		debug.extend = extend;
-		// Debug.formatArgs = formatArgs;
-		// debug.rawLog = rawLog;
+		debug.destroy = createDebug.destroy; // XXX Temporary. Will be removed in the next major release.
 
-		// env-specific initialization logic for debug instances
+		Object.defineProperty(debug, 'enabled', {
+			enumerable: true,
+			configurable: false,
+			get: () => {
+				if (enableOverride !== null) {
+					return enableOverride;
+				}
+				if (namespacesCache !== createDebug.namespaces) {
+					namespacesCache = createDebug.namespaces;
+					enabledCache = createDebug.enabled(namespace);
+				}
+
+				return enabledCache;
+			},
+			set: v => {
+				enableOverride = v;
+			}
+		});
+
+		// Env-specific initialization logic for debug instances
 		if (typeof createDebug.init === 'function') {
 			createDebug.init(debug);
 		}
 
-		createDebug.instances.push(debug);
-
 		return debug;
-	}
-
-	function destroy() {
-		const index = createDebug.instances.indexOf(this);
-		if (index !== -1) {
-			createDebug.instances.splice(index, 1);
-			return true;
-		}
-		return false;
 	}
 
 	function extend(namespace, delimiter) {
@@ -4905,33 +4946,67 @@ function setup(env) {
 	*/
 	function enable(namespaces) {
 		createDebug.save(namespaces);
+		createDebug.namespaces = namespaces;
 
 		createDebug.names = [];
 		createDebug.skips = [];
 
-		let i;
-		const split = (typeof namespaces === 'string' ? namespaces : '').split(/[\s,]+/);
-		const len = split.length;
+		const split = (typeof namespaces === 'string' ? namespaces : '')
+			.trim()
+			.replace(/\s+/g, ',')
+			.split(',')
+			.filter(Boolean);
 
-		for (i = 0; i < len; i++) {
-			if (!split[i]) {
-				// ignore empty strings
-				continue;
-			}
-
-			namespaces = split[i].replace(/\*/g, '.*?');
-
-			if (namespaces[0] === '-') {
-				createDebug.skips.push(new RegExp('^' + namespaces.substr(1) + '$'));
+		for (const ns of split) {
+			if (ns[0] === '-') {
+				createDebug.skips.push(ns.slice(1));
 			} else {
-				createDebug.names.push(new RegExp('^' + namespaces + '$'));
+				createDebug.names.push(ns);
+			}
+		}
+	}
+
+	/**
+	 * Checks if the given string matches a namespace template, honoring
+	 * asterisks as wildcards.
+	 *
+	 * @param {String} search
+	 * @param {String} template
+	 * @return {Boolean}
+	 */
+	function matchesTemplate(search, template) {
+		let searchIndex = 0;
+		let templateIndex = 0;
+		let starIndex = -1;
+		let matchIndex = 0;
+
+		while (searchIndex < search.length) {
+			if (templateIndex < template.length && (template[templateIndex] === search[searchIndex] || template[templateIndex] === '*')) {
+				// Match character or proceed with wildcard
+				if (template[templateIndex] === '*') {
+					starIndex = templateIndex;
+					matchIndex = searchIndex;
+					templateIndex++; // Skip the '*'
+				} else {
+					searchIndex++;
+					templateIndex++;
+				}
+			} else if (starIndex !== -1) { // eslint-disable-line no-negated-condition
+				// Backtrack to the last '*' and try to match more characters
+				templateIndex = starIndex + 1;
+				matchIndex++;
+				searchIndex = matchIndex;
+			} else {
+				return false; // No match
 			}
 		}
 
-		for (i = 0; i < createDebug.instances.length; i++) {
-			const instance = createDebug.instances[i];
-			instance.enabled = createDebug.enabled(instance.namespace);
+		// Handle trailing '*' in template
+		while (templateIndex < template.length && template[templateIndex] === '*') {
+			templateIndex++;
 		}
+
+		return templateIndex === template.length;
 	}
 
 	/**
@@ -4942,8 +5017,8 @@ function setup(env) {
 	*/
 	function disable() {
 		const namespaces = [
-			...createDebug.names.map(toNamespace),
-			...createDebug.skips.map(toNamespace).map(namespace => '-' + namespace)
+			...createDebug.names,
+			...createDebug.skips.map(namespace => '-' + namespace)
 		].join(',');
 		createDebug.enable('');
 		return namespaces;
@@ -4957,39 +5032,19 @@ function setup(env) {
 	* @api public
 	*/
 	function enabled(name) {
-		if (name[name.length - 1] === '*') {
-			return true;
-		}
-
-		let i;
-		let len;
-
-		for (i = 0, len = createDebug.skips.length; i < len; i++) {
-			if (createDebug.skips[i].test(name)) {
+		for (const skip of createDebug.skips) {
+			if (matchesTemplate(name, skip)) {
 				return false;
 			}
 		}
 
-		for (i = 0, len = createDebug.names.length; i < len; i++) {
-			if (createDebug.names[i].test(name)) {
+		for (const ns of createDebug.names) {
+			if (matchesTemplate(name, ns)) {
 				return true;
 			}
 		}
 
 		return false;
-	}
-
-	/**
-	* Convert regexp to namespace
-	*
-	* @param {RegExp} regxep
-	* @return {String} namespace
-	* @api private
-	*/
-	function toNamespace(regexp) {
-		return regexp.toString()
-			.substring(2, regexp.toString().length - 2)
-			.replace(/\.\*\?$/, '*');
 	}
 
 	/**
@@ -5004,6 +5059,14 @@ function setup(env) {
 			return val.stack || val.message;
 		}
 		return val;
+	}
+
+	/**
+	* XXX DO NOT USE. This is a temporary stub function.
+	* XXX It WILL be removed in the next major release.
+	*/
+	function destroy() {
+		console.warn('Instance method `debug.destroy()` is deprecated and no longer does anything. It will be removed in the next major version of `debug`.');
 	}
 
 	createDebug.enable(createDebug.load());
@@ -5071,7 +5134,7 @@ var y = d * 365.25;
  * @api public
  */
 
-module.exports = function(val, options) {
+module.exports = function (val, options) {
   options = options || {};
   var type = typeof val;
   if (type === 'string' && val.length > 0) {
@@ -5442,7 +5505,7 @@ void function(root){
 }(this)
 
 },{}],29:[function(_dereq_,module,exports){
-(function (setImmediate,clearImmediate){
+(function (setImmediate,clearImmediate){(function (){
 var nextTick = _dereq_('process/browser.js').nextTick;
 var apply = Function.prototype.apply;
 var slice = Array.prototype.slice;
@@ -5519,7 +5582,7 @@ exports.setImmediate = typeof setImmediate === "function" ? setImmediate : funct
 exports.clearImmediate = typeof clearImmediate === "function" ? clearImmediate : function(id) {
   delete immediateIds[id];
 };
-}).call(this,_dereq_("timers").setImmediate,_dereq_("timers").clearImmediate)
+}).call(this)}).call(this,_dereq_("timers").setImmediate,_dereq_("timers").clearImmediate)
 },{"process/browser.js":27,"timers":29}],30:[function(_dereq_,module,exports){
 module.exports =
 {
@@ -5528,14 +5591,14 @@ module.exports =
 };
 
 },{"./lib/Event":31,"./lib/EventTarget":32}],31:[function(_dereq_,module,exports){
-(function (global){
+(function (global){(function (){
 /**
  * In browsers export the native Event interface.
  */
 
 module.exports = global.Event;
 
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+}).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 },{}],32:[function(_dereq_,module,exports){
 function yaetiEventTarget()
 {
