@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <plugin xmlns="http://apache.org/cordova/ns/plugins/1.0"
 		id="cordova-plugin-iosrtc"
-		version="8.0.4">
+		version="8.0.5">
 
 	<name>iosrtc</name>
 	<description>Cordova iOS plugin exposing the full WebRTC W3C JavaScript APIs</description>
@@ -57,8 +57,6 @@
 			<clobbers target="cordova.plugins.iosrtc" />
 		</js-module>
 
-		<!-- Bridging header for using ObjetiveC libraries in Swift -->
-		<header-file src="src/cordova-plugin-iosrtc-Bridging-Header.h" />
 
 		<!-- Project source files -->
 		<source-file src="src/iosrtcPlugin.swift" />
@@ -102,7 +100,14 @@
 		<framework src="VideoToolbox.framework" />
 
 		<!-- WebRTC library -->
-		<framework src="lib/WebRTC.xcframework" custom="true" embed="true" />
+		<podspec>
+			<config>
+				<source url="https://cdn.cocoapods.org/"/>
+			</config>
+			<pods use-frameworks="true">
+				<pod name="GoogleWebRTC" />
+			</pods>
+		</podspec>
 	</platform>
 
 </plugin>

@@ -1,4 +1,5 @@
 import Foundation
+import WebRTC
 import AVFoundation
 
 import func ObjectiveC.objc_getAssociatedObject
