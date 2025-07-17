@@ -17,6 +17,8 @@ var // Dictionary of MediaStreamRenderers.
 	exec = require('cordova/exec'),
 	domready = require('domready'),
 	getUserMedia = require('./getUserMedia'),
+	getDisplayMedia = require('./getDisplayMedia'),
+	stopDisplayMedia = require('./stopDisplayMedia'),
 	enumerateDevices = require('./enumerateDevices'),
 	RTCPeerConnection = require('./RTCPeerConnection'),
 	RTCSessionDescription = require('./RTCSessionDescription'),
@@ -33,6 +35,8 @@ var // Dictionary of MediaStreamRenderers.
 module.exports = {
 	// Expose WebRTC classes and functions.
 	getUserMedia: getUserMedia,
+	getDisplayMedia: getDisplayMedia,
+	stopDisplayMedia: stopDisplayMedia,
 	enumerateDevices: enumerateDevices,
 	getMediaDevices: enumerateDevices, // TMP
 	RTCPeerConnection: RTCPeerConnection,
@@ -180,6 +184,8 @@ function callbackifyPrototype(proto, method) {
 function restoreCallbacksSupport() {
 	debug('restoreCallbacksSupport()');
 	getUserMedia = callbackifyMethod(getUserMedia);
+	getDisplayMedia = callbackifyMethod(getDisplayMedia);
+	stopDisplayMedia = callbackifyMethod(stopDisplayMedia);
 	enumerateDevices = callbackifyMethod(enumerateDevices);
 	callbackifyPrototype(RTCPeerConnection.prototype, 'createAnswer');
 	callbackifyPrototype(RTCPeerConnection.prototype, 'createOffer');

@@ -12,6 +12,7 @@ module.exports = MediaDevices;
  */
 var EventTarget = require('./EventTarget'),
 	getUserMedia = require('./getUserMedia'),
+	getDisplayMedia = require('./getDisplayMedia'),
 	enumerateDevices = require('./enumerateDevices');
 
 function MediaDevices(data) {
@@ -38,6 +39,10 @@ MediaDevices.prototype.getUserMedia = function (constraints) {
 
 MediaDevices.prototype.enumerateDevices = function () {
 	return enumerateDevices();
+};
+
+MediaDevices.prototype.getDisplayMedia = function (constraints) {
+	return getDisplayMedia(constraints);
 };
 
 MediaDevices.prototype.getSupportedConstraints = function () {

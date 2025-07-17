@@ -1,6 +1,7 @@
 import Foundation
 import AVFoundation
 import WebRTC
+import ReplayKit
 
 
 @objc(iosrtcPlugin) // This class must be accesible from Objective-C.
@@ -21,6 +22,14 @@ class iosrtcPlugin : CDVPlugin {
 	var queue: DispatchQueue!
 	// Auto selecting output speaker
 	var audioOutputController: PluginRTCAudioController!
+	
+	// Screen capture properties
+	private var notificationCenter: CFNotificationCenter?
+	private var screenCapturer: RTCVideoCapturer?
+	private var screenTrack: RTCVideoTrack?
+	private var screenStreamCallbackId: String?
+	private var isScreenBroadcasting = false
+	private var screenMediaStream: PluginMediaStream?
 
 
 	// This is just called if <param name="onload" value="true" /> in plugin.xml.
@@ -51,6 +60,25 @@ class iosrtcPlugin : CDVPlugin {
 
 		// Create a PluginRTCAudioController instance.
 		self.audioOutputController = PluginRTCAudioController()
+		
+		// Initialize screen capture notification center
+		self.notificationCenter = CFNotificationCenterGetDarwinNotifyCenter()
+		
+		// Listen for screen capture start and stop events from broadcast extension
+		self.listenNotification("iOS_BroadcastStarted" as CFString, callback: { center, observer, name, object, info in
+			DispatchQueue.main.async {
+				if let plugin = Unmanaged<iosrtcPlugin>.fromOpaque(observer!).takeUnretainedValue() as? iosrtcPlugin {
+					plugin.onBroadcastStarted()
+				}
+			}
+		})
+		self.listenNotification("iOS_BroadcastStopped" as CFString, callback: { center, observer, name, object, info in
+			DispatchQueue.main.async {
+				if let plugin = Unmanaged<iosrtcPlugin>.fromOpaque(observer!).takeUnretainedValue() as? iosrtcPlugin {
+					plugin.onBroadcastStopped()
+				}
+			}
+		})
 	}
 
 	private func initPeerConnectionFactory() {
@@ -751,7 +779,7 @@ class iosrtcPlugin : CDVPlugin {
 					self.emit(command.callbackId,
 						result: CDVPluginResult(
 							status: CDVCommandStatus_OK,
-							messageAs: data as? [AnyHashable: Any]
+						 messageAs: data as? [AnyHashable: Any]
 						)
 					)
 				}
@@ -1200,6 +1228,91 @@ class iosrtcPlugin : CDVPlugin {
 		)
 	}
 
+	@objc(getDisplayMedia:) func getDisplayMedia(_ command: CDVInvokedUrlCommand) {
+		NSLog("iosrtcPlugin#getDisplayMedia()")
+		
+		self.screenStreamCallbackId = command.callbackId
+		
+		// For now, create a mock screen stream
+		// In a real implementation, you would integrate with iOS screen recording
+		// or use a broadcast extension
+		
+		let streamId = UUID().uuidString
+		let rtcMediaStream = self.rtcPeerConnectionFactory.mediaStream(withStreamId: streamId)
+		
+		// Create a video source and track
+		let videoSource = self.rtcPeerConnectionFactory.videoSource()
+		let videoTrack = self.rtcPeerConnectionFactory.videoTrack(with: videoSource, trackId: UUID().uuidString)
+		self.screenTrack = videoTrack
+		
+		rtcMediaStream.addVideoTrack(videoTrack)
+		
+		// Create PluginMediaStream
+		let pluginMediaStream = PluginMediaStream(rtcMediaStream: rtcMediaStream, streamId: streamId)
+		pluginMediaStream.run()
+		
+		// Store the stream in management system
+		self.pluginMediaStreams[streamId] = pluginMediaStream
+		
+		// Store video track in management system
+		for (_, pluginMediaStreamTrack) in pluginMediaStream.videoTracks {
+			self.pluginMediaStreamTracks[pluginMediaStreamTrack.id] = pluginMediaStreamTrack
+		}
+		
+		// Store reference for cleanup
+		self.screenMediaStream = pluginMediaStream
+		self.isScreenBroadcasting = true
+		
+		// Get stream data
+		let streamJSON = pluginMediaStream.getJSON()
+		
+		// Wrap in response format expected by getDisplayMedia
+		var responseData: [String: Any] = [:]
+		responseData["stream"] = streamJSON
+		
+		let result = CDVPluginResult(status: CDVCommandStatus_OK, messageAs: responseData)
+		self.emit(command.callbackId, result: result)
+		
+		// Show system broadcast picker for actual screen capture
+		DispatchQueue.main.async {
+			if let appExtension = Bundle.main.infoDictionary?["RTCScreenSharingExtension"] as? String {
+				let picker = RPSystemBroadcastPickerView()
+				picker.preferredExtension = appExtension
+				picker.showsMicrophoneButton = false
+				
+				// Add the picker to the view hierarchy temporarily
+				if let rootView = self.viewController?.view {
+					rootView.addSubview(picker)
+					picker.frame = CGRect(x: 0, y: 0, width: 44, height: 44)
+					
+					// Simulate button press
+					let selector = NSSelectorFromString("buttonPressed:")
+					if picker.responds(to: selector) {
+						picker.perform(selector, with: nil)
+					}
+					
+					// Remove the picker after a short delay
+					DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+						picker.removeFromSuperview()
+					}
+				}
+			}
+		}
+	}
+
+	@objc(stopDisplayMedia:) func stopDisplayMedia(_ command: CDVInvokedUrlCommand) {
+		NSLog("iosrtcPlugin#stopDisplayMedia()")
+		
+		self.cleanupScreenCapture()
+		
+		// Send success result
+		let result = CDVPluginResult(status: CDVCommandStatus_OK)
+		self.emit(command.callbackId, result: result)
+		
+		// Clear callback reference
+		self.screenStreamCallbackId = nil
+	}
+	
 	@objc(enumerateDevices:) func enumerateDevices(_ command: CDVInvokedUrlCommand) {
 		NSLog("iosrtcPlugin#enumerateDevices()")
 
@@ -1404,83 +1517,106 @@ class iosrtcPlugin : CDVPlugin {
 		for (trackId, pluginMediaStreamTrack) in self.pluginMediaStreamTracks {
 			deleteMediaStreamTrack(pluginMediaStreamTrack);
 		}
+		
+		// Clean up screen capture
+		self.cleanupScreenCapture()
 	}
-
-	@objc(RTCPeerConnection_RTCRtpSender_setParameters:) func RTCPeerConnection_RTCRtpSender_setParameters(_ command: CDVInvokedUrlCommand) {
-		NSLog("iosrtcPlugin#RTCPeerConnection_RTCRtpSender_setParameters()")
-
-		let pcId = command.argument(at: 0) as! Int
-		let senderId = command.argument(at: 1) as! Int
-		let params = command.argument(at: 2) as! [String : NSObject]
-
-		let pluginRTCPeerConnection = self.pluginRTCPeerConnections[pcId]
-
-		if pluginRTCPeerConnection == nil {
-			NSLog("iosrtcPlugin#RTCRtpSender_setParameters() | ERROR: pluginRTCPeerConnection with pcId=%@ does not exist", String(pcId))
-			return;
+	
+	// MARK: - Screen Capture Methods
+	
+	private func onBroadcastStarted() {
+		self.isScreenBroadcasting = true
+		
+		// Create RTCMediaStream with screen capture track
+		guard let screenTrack = self.screenTrack else {
+			let errorResult = CDVPluginResult(status: CDVCommandStatus_ERROR, messageAs: "Screen track not available")
+			self.emit(self.screenStreamCallbackId!, result: errorResult)
+			return
 		}
-
-		self.queue.async { [weak pluginRTCPeerConnection] in
-			let pluginRTCRptSender = pluginRTCPeerConnection!.pluginRTCRtpSenders[senderId]
-			if pluginRTCRptSender == nil {
-				NSLog("iosrtcPlugin#RTCPeerConnection_RTCRtpSender_setParameters() | ERROR: pluginRTCRptSender with id=%@ does not exist", String(senderId))
-				return;
-			}
-
-			let callback: (NSDictionary) -> Void = { data in
-				self.emit(command.callbackId,
-					result: CDVPluginResult(
-						status: CDVCommandStatus_OK,
-						messageAs: data as? [AnyHashable: Any]
-					)
-				)
-			}
-			let errback: (Error) -> Void = { error in
-				self.emit(command.callbackId,
-					result: CDVPluginResult(status: CDVCommandStatus_ERROR, messageAs: error.localizedDescription)
-				)
-			}
-			pluginRTCRptSender!.setParameters(params, callback, errback);
+		
+		let streamId = UUID().uuidString
+		let rtcMediaStream = self.rtcPeerConnectionFactory.mediaStream(withStreamId: streamId)
+		rtcMediaStream.addVideoTrack(screenTrack)
+		
+		// Create PluginMediaStream
+		let pluginMediaStream = PluginMediaStream(rtcMediaStream: rtcMediaStream, streamId: streamId)
+		pluginMediaStream.run()
+		
+		// Store the stream in management system
+		self.pluginMediaStreams[streamId] = pluginMediaStream
+		
+		// Store video track in management system
+		for (_, pluginMediaStreamTrack) in pluginMediaStream.videoTracks {
+			self.pluginMediaStreamTracks[pluginMediaStreamTrack.id] = pluginMediaStreamTrack
+		}
+		
+		// Store reference for cleanup
+		self.screenMediaStream = pluginMediaStream
+		
+		// Get stream data
+		let streamJSON = pluginMediaStream.getJSON()
+		
+		// Wrap in response format expected by getDisplayMedia
+		var responseData: [String: Any] = [:]
+		responseData["stream"] = streamJSON
+		
+		let result = CDVPluginResult(status: CDVCommandStatus_OK, messageAs: responseData)
+		self.emit(self.screenStreamCallbackId!, result: result)
+	}
+	
+	private func onBroadcastStopped() {
+		self.cleanupScreenCapture()
+		
+		var message: [String: Any] = [:]
+		message["event"] = "broadcastStopped"
+		message["stream"] = NSNull() // Indicate stream is no longer available
+		
+		let result = CDVPluginResult(status: CDVCommandStatus_OK, messageAs: message)
+		result?.keepCallback = true
+		if let callbackId = self.screenStreamCallbackId {
+			self.emit(callbackId, result: result)
 		}
 	}
-
-	@objc(RTCPeerConnection_RTCRtpSender_replaceTrack:) func RTCPeerConnection_RTCRtpSender_replaceTrack(_ command: CDVInvokedUrlCommand) {
-        NSLog("iosrtcPlugin#RTCPeerConnection_RTCRtpSender_replaceTrack()")
-
-        guard let pcId = command.argument(at: 0) as? Int,
-              let senderId = command.argument(at: 1) as? Int else {
-            NSLog("iosrtcPlugin#RTCPeerConnection_RTCRtpSender_replaceTrack() | ERROR: Invalid pcId or senderId")
-            return
-        }
-
-        let trackId: String? = command.argument(at: 2) as? String
-
-        guard let pluginRTCPeerConnection = self.pluginRTCPeerConnections[pcId] else {
-            NSLog("iosrtcPlugin#RTCPeerConnection_RTCRtpSender_replaceTrack() | ERROR: pluginRTCPeerConnection with pcId=%@ does not exist", String(pcId))
-            return
-        }
-
-        self.queue.async { [weak pluginRTCPeerConnection] in
-            guard let pluginRTCRptSender = pluginRTCPeerConnection?.pluginRTCRtpSenders[senderId] else {
-                NSLog("iosrtcPlugin#RTCPeerConnection_RTCRtpSender_replaceTrack() | ERROR: Unable to find sender")
-                return
-            }
-
-            if let trackId = trackId, let pluginMediaStreamTrack = self.pluginMediaStreamTracks[trackId] {
-                pluginRTCRptSender.replaceTrack(pluginMediaStreamTrack)
-                self.emit(command.callbackId,
-                          result: CDVPluginResult(
-                            status: CDVCommandStatus_OK,
-                            messageAs: [
-                                "track": pluginMediaStreamTrack.getJSON()
-                            ]))
-            } else {
-                NSLog("iosrtcPlugin#RTCPeerConnection_RTCRtpSender_replaceTrack() | ERROR: Unable to find track")
-                self.emit(command.callbackId,
-                          result: CDVPluginResult(
-                            status: CDVCommandStatus_ERROR,
-                            messageAs: "Cannot find native RTCRtpSender track"))
-            }
-        }
-    }
+	
+	private func cleanupScreenCapture() {
+		self.isScreenBroadcasting = false
+		
+		// Clean up screen capturer
+		self.screenCapturer?.stopCapture()
+		self.screenCapturer = nil
+		
+		// Clean up screen track
+		self.screenTrack?.isEnabled = false
+		self.screenTrack = nil
+		
+		// Clean up managed objects
+		if let pluginMediaStream = self.screenMediaStream {
+			// Remove from stream management
+			self.pluginMediaStreams[pluginMediaStream.id] = nil
+			
+			// Clean up video tracks
+			for (_, pluginMediaStreamTrack) in pluginMediaStream.videoTracks {
+				self.pluginMediaStreamTracks[pluginMediaStreamTrack.id] = nil
+			}
+			
+			// Clean up audio tracks (if any)
+			for (_, pluginMediaStreamTrack) in pluginMediaStream.audioTracks {
+				self.pluginMediaStreamTracks[pluginMediaStreamTrack.id] = nil
+			}
+		}
+		
+		// Clear references
+		self.screenMediaStream = nil
+	}
+	
+	private func listenNotification(_ name: CFString, callback: CFNotificationCallback!) {
+		CFNotificationCenterAddObserver(
+			self.notificationCenter,
+			Unmanaged.passUnretained(self).toOpaque(),
+			callback,
+			name,
+			nil,
+			CFNotificationSuspensionBehavior.deliverImmediately
+		)
+	}
 }
