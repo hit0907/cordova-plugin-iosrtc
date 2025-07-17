@@ -1,5 +1,5 @@
 /*
- * cordova-plugin-iosrtc v8.0.4
+ * cordova-plugin-iosrtc v8.0.5
  * Cordova iOS plugin exposing the full WebRTC W3C JavaScript APIs
  * Copyright 2015-2017 eFace2Face, Inc. (https://eface2face.com)
  * Copyright 2015-2019 BasqueVoIPMafia (https://github.com/BasqueVoIPMafia)
@@ -88,7 +88,7 @@ EventTarget.prototype.dispatchEvent = function (event) {
  */
 module.exports = EventTarget;
 
-},{"yaeti":30}],3:[function(_dereq_,module,exports){
+},{"yaeti":32}],3:[function(_dereq_,module,exports){
 /**
  * Expose the MediaDeviceInfo class.
  */
@@ -137,6 +137,7 @@ module.exports = MediaDevices;
  */
 var EventTarget = _dereq_('./EventTarget'),
 	getUserMedia = _dereq_('./getUserMedia'),
+	getDisplayMedia = _dereq_('./getDisplayMedia'),
 	enumerateDevices = _dereq_('./enumerateDevices');
 
 function MediaDevices(data) {
@@ -163,6 +164,10 @@ MediaDevices.prototype.getUserMedia = function (constraints) {
 
 MediaDevices.prototype.enumerateDevices = function () {
 	return enumerateDevices();
+};
+
+MediaDevices.prototype.getDisplayMedia = function (constraints) {
+	return getDisplayMedia(constraints);
 };
 
 MediaDevices.prototype.getSupportedConstraints = function () {
@@ -202,7 +207,7 @@ MediaDevices.prototype.getSupportedConstraints = function () {
 	};
 };
 
-},{"./EventTarget":2,"./enumerateDevices":19,"./getUserMedia":20}],5:[function(_dereq_,module,exports){
+},{"./EventTarget":2,"./enumerateDevices":19,"./getDisplayMedia":20,"./getUserMedia":21}],5:[function(_dereq_,module,exports){
 /**
  * Expose the MediaStream class.
  */
@@ -714,7 +719,7 @@ function onEvent(data) {
 	}
 }
 
-},{"./EventTarget":2,"./MediaStreamTrack":7,"cordova/exec":undefined,"debug":23}],6:[function(_dereq_,module,exports){
+},{"./EventTarget":2,"./MediaStreamTrack":7,"cordova/exec":undefined,"debug":25}],6:[function(_dereq_,module,exports){
 /**
  * Expose the MediaStreamRenderer class.
  */
@@ -1124,7 +1129,7 @@ function getElementPositionAndSize() {
 	};
 }
 
-},{"./EventTarget":2,"./MediaStream":5,"cordova/exec":undefined,"debug":23,"random-number":28}],7:[function(_dereq_,module,exports){
+},{"./EventTarget":2,"./MediaStream":5,"cordova/exec":undefined,"debug":25,"random-number":30}],7:[function(_dereq_,module,exports){
 /**
  * Expose the MediaStreamTrack class.
  */
@@ -1304,7 +1309,7 @@ function onEvent(data) {
 	}
 }
 
-},{"./EventTarget":2,"./MediaTrackCapabilities":8,"./MediaTrackSettings":9,"./enumerateDevices":19,"cordova/exec":undefined,"debug":23}],8:[function(_dereq_,module,exports){
+},{"./EventTarget":2,"./MediaTrackCapabilities":8,"./MediaTrackSettings":9,"./enumerateDevices":19,"cordova/exec":undefined,"debug":25}],8:[function(_dereq_,module,exports){
 /**
  * Expose the MediaTrackSettings class.
  */
@@ -1459,8 +1464,8 @@ function onEvent(data) {
 	}
 }
 
-},{"./EventTarget":2,"cordova/exec":undefined,"debug":23,"random-number":28}],11:[function(_dereq_,module,exports){
-(function (setImmediate){(function (){
+},{"./EventTarget":2,"cordova/exec":undefined,"debug":25,"random-number":30}],11:[function(_dereq_,module,exports){
+(function (setImmediate){
 /**
  * Expose the RTCDataChannel class.
  */
@@ -1725,8 +1730,8 @@ function onEvent(data) {
 	}
 }
 
-}).call(this)}).call(this,_dereq_("timers").setImmediate)
-},{"./EventTarget":2,"cordova/exec":undefined,"debug":23,"random-number":28,"timers":29}],12:[function(_dereq_,module,exports){
+}).call(this,_dereq_("timers").setImmediate)
+},{"./EventTarget":2,"cordova/exec":undefined,"debug":25,"random-number":30,"timers":31}],12:[function(_dereq_,module,exports){
 /**
  * Expose the RTCIceCandidate class.
  */
@@ -1915,7 +1920,7 @@ function RTCIceCandidate(data) {
 }
 
 },{}],13:[function(_dereq_,module,exports){
-(function (global){(function (){
+(function (global){
 /**
  * Expose the RTCPeerConnection class.
  */
@@ -2925,8 +2930,8 @@ function onEvent(data) {
 	this.dispatchEvent(event);
 }
 
-}).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./Errors":1,"./EventTarget":2,"./MediaStream":5,"./MediaStreamTrack":7,"./RTCDTMFSender":10,"./RTCDataChannel":11,"./RTCIceCandidate":12,"./RTCRtpReceiver":14,"./RTCRtpSender":15,"./RTCRtpTransceiver":16,"./RTCSessionDescription":17,"./RTCStatsReport":18,"cordova/exec":undefined,"debug":23,"random-number":28}],14:[function(_dereq_,module,exports){
+}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{"./Errors":1,"./EventTarget":2,"./MediaStream":5,"./MediaStreamTrack":7,"./RTCDTMFSender":10,"./RTCDataChannel":11,"./RTCIceCandidate":12,"./RTCRtpReceiver":14,"./RTCRtpSender":15,"./RTCRtpTransceiver":16,"./RTCSessionDescription":17,"./RTCStatsReport":18,"cordova/exec":undefined,"debug":25,"random-number":30}],14:[function(_dereq_,module,exports){
 /**
  * Expose the RTCRtpReceiver class.
  */
@@ -2961,7 +2966,7 @@ RTCRtpReceiver.prototype.update = function ({ track, params }) {
 	this.params = params;
 };
 
-},{"random-number":28}],15:[function(_dereq_,module,exports){
+},{"random-number":30}],15:[function(_dereq_,module,exports){
 /**
  * Expose the RTCRtpSender class.
  */
@@ -3065,7 +3070,7 @@ RTCRtpSender.prototype.update = function ({ track, params }) {
 	this.params = params;
 };
 
-},{"./MediaStreamTrack":7,"cordova/exec":undefined,"random-number":28}],16:[function(_dereq_,module,exports){
+},{"./MediaStreamTrack":7,"cordova/exec":undefined,"random-number":30}],16:[function(_dereq_,module,exports){
 const RTCRtpSender = _dereq_('./RTCRtpSender');
 const RTCRtpReceiver = _dereq_('./RTCRtpReceiver');
 
@@ -3222,7 +3227,7 @@ RTCRtpTransceiver.prototype.update = function (data) {
 	this.sender.update(data.sender);
 };
 
-},{"./EventTarget":2,"./RTCRtpReceiver":14,"./RTCRtpSender":15,"cordova/exec":undefined,"debug":23,"random-number":28}],17:[function(_dereq_,module,exports){
+},{"./EventTarget":2,"./RTCRtpReceiver":14,"./RTCRtpSender":15,"cordova/exec":undefined,"debug":25,"random-number":30}],17:[function(_dereq_,module,exports){
 /**
  * Expose the RTCSessionDescription class.
  */
@@ -3325,7 +3330,136 @@ function getMediaDeviceInfos(devices) {
 	return mediaDeviceInfos;
 }
 
-},{"./Errors":1,"./MediaDeviceInfo":3,"cordova/exec":undefined,"debug":23}],20:[function(_dereq_,module,exports){
+},{"./Errors":1,"./MediaDeviceInfo":3,"cordova/exec":undefined,"debug":25}],20:[function(_dereq_,module,exports){
+/**
+ * Expose the getDisplayMedia function.
+ */
+module.exports = getDisplayMedia;
+
+/**
+ * Dependencies.
+ */
+var debug = _dereq_('debug')('iosrtc:getDisplayMedia'),
+	debugerror = _dereq_('debug')('iosrtc:ERROR:getDisplayMedia'),
+	exec = _dereq_('cordova/exec'),
+	MediaStream = _dereq_('./MediaStream'),
+	Errors = _dereq_('./Errors');
+
+function getDisplayMedia(constraints) {
+	// Detect callback usage to assist migration
+	Errors.detectDeprecatedCallbaksUsage('cordova.plugins.iosrtc.getDisplayMedia', arguments);
+
+	debug('[original constraints:%o]', constraints);
+
+	var newConstraints = {};
+
+	if (typeof constraints !== 'object') {
+		constraints = {};
+	}
+
+	// Set default video constraints for screen capture
+	if (!constraints.video) {
+		constraints.video = true;
+	}
+
+	// Audio is typically not supported for screen capture
+	if (constraints.audio) {
+		debug('Audio constraints will be ignored for screen capture');
+	}
+
+	// Set video constraints
+	if (constraints.video === true) {
+		newConstraints.video = {
+			mandatory: {},
+			optional: []
+		};
+	} else if (typeof constraints.video === 'object') {
+		newConstraints.video = {
+			mandatory: {},
+			optional: []
+		};
+
+		// Process video constraints
+		if (constraints.video.width) {
+			if (typeof constraints.video.width === 'number') {
+				newConstraints.video.mandatory.minWidth = constraints.video.width;
+				newConstraints.video.mandatory.maxWidth = constraints.video.width;
+			} else if (typeof constraints.video.width === 'object') {
+				if (
+					constraints.video.width.min &&
+					typeof constraints.video.width.min === 'number'
+				) {
+					newConstraints.video.mandatory.minWidth = constraints.video.width.min;
+				}
+				if (
+					constraints.video.width.max &&
+					typeof constraints.video.width.max === 'number'
+				) {
+					newConstraints.video.mandatory.maxWidth = constraints.video.width.max;
+				}
+			}
+		}
+
+		if (constraints.video.height) {
+			if (typeof constraints.video.height === 'number') {
+				newConstraints.video.mandatory.minHeight = constraints.video.height;
+				newConstraints.video.mandatory.maxHeight = constraints.video.height;
+			} else if (typeof constraints.video.height === 'object') {
+				if (
+					constraints.video.height.min &&
+					typeof constraints.video.height.min === 'number'
+				) {
+					newConstraints.video.mandatory.minHeight = constraints.video.height.min;
+				}
+				if (
+					constraints.video.height.max &&
+					typeof constraints.video.height.max === 'number'
+				) {
+					newConstraints.video.mandatory.maxHeight = constraints.video.height.max;
+				}
+			}
+		}
+
+		if (constraints.video.frameRate) {
+			if (typeof constraints.video.frameRate === 'number') {
+				newConstraints.video.mandatory.minFrameRate = constraints.video.frameRate;
+				newConstraints.video.mandatory.maxFrameRate = constraints.video.frameRate;
+			} else if (typeof constraints.video.frameRate === 'object') {
+				if (
+					constraints.video.frameRate.min &&
+					typeof constraints.video.frameRate.min === 'number'
+				) {
+					newConstraints.video.mandatory.minFrameRate = constraints.video.frameRate.min;
+				}
+				if (
+					constraints.video.frameRate.max &&
+					typeof constraints.video.frameRate.max === 'number'
+				) {
+					newConstraints.video.mandatory.maxFrameRate = constraints.video.frameRate.max;
+				}
+			}
+		}
+	}
+
+	debug('[new constraints:%o]', newConstraints);
+
+	return new Promise(function (resolve, reject) {
+		function onResultOK(data) {
+			debug('getDisplayMedia() | success');
+			var stream = MediaStream.create(data.stream);
+			resolve(stream);
+		}
+
+		function onResultError(error) {
+			debugerror('getDisplayMedia() | error:', error);
+			reject(new Errors.MediaStreamError('getDisplayMedia() failed: ' + error));
+		}
+
+		exec(onResultOK, onResultError, 'iosrtcPlugin', 'getDisplayMedia', [newConstraints]);
+	});
+}
+
+},{"./Errors":1,"./MediaStream":5,"cordova/exec":undefined,"debug":25}],21:[function(_dereq_,module,exports){
 /**
  * Expose the getUserMedia function.
  */
@@ -3786,8 +3920,8 @@ function getUserMedia(constraints) {
 	});
 }
 
-},{"./Errors":1,"./MediaStream":5,"cordova/exec":undefined,"debug":23}],21:[function(_dereq_,module,exports){
-(function (global){(function (){
+},{"./Errors":1,"./MediaStream":5,"cordova/exec":undefined,"debug":25}],22:[function(_dereq_,module,exports){
+(function (global){
 /**
  * Variables.
  */
@@ -3807,6 +3941,8 @@ var // Dictionary of MediaStreamRenderers.
 	exec = _dereq_('cordova/exec'),
 	domready = _dereq_('domready'),
 	getUserMedia = _dereq_('./getUserMedia'),
+	getDisplayMedia = _dereq_('./getDisplayMedia'),
+	stopDisplayMedia = _dereq_('./stopDisplayMedia'),
 	enumerateDevices = _dereq_('./enumerateDevices'),
 	RTCPeerConnection = _dereq_('./RTCPeerConnection'),
 	RTCSessionDescription = _dereq_('./RTCSessionDescription'),
@@ -3823,6 +3959,8 @@ var // Dictionary of MediaStreamRenderers.
 module.exports = {
 	// Expose WebRTC classes and functions.
 	getUserMedia: getUserMedia,
+	getDisplayMedia: getDisplayMedia,
+	stopDisplayMedia: stopDisplayMedia,
 	enumerateDevices: enumerateDevices,
 	getMediaDevices: enumerateDevices, // TMP
 	RTCPeerConnection: RTCPeerConnection,
@@ -3970,6 +4108,8 @@ function callbackifyPrototype(proto, method) {
 function restoreCallbacksSupport() {
 	debug('restoreCallbacksSupport()');
 	getUserMedia = callbackifyMethod(getUserMedia);
+	getDisplayMedia = callbackifyMethod(getDisplayMedia);
+	stopDisplayMedia = callbackifyMethod(stopDisplayMedia);
 	enumerateDevices = callbackifyMethod(enumerateDevices);
 	callbackifyPrototype(RTCPeerConnection.prototype, 'createAnswer');
 	callbackifyPrototype(RTCPeerConnection.prototype, 'createOffer');
@@ -4089,8 +4229,40 @@ function dump() {
 	exec(null, null, 'iosrtcPlugin', 'dump', []);
 }
 
-}).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./MediaDevices":4,"./MediaStream":5,"./MediaStreamTrack":7,"./RTCIceCandidate":12,"./RTCPeerConnection":13,"./RTCRtpTransceiver":16,"./RTCSessionDescription":17,"./enumerateDevices":19,"./getUserMedia":20,"./videoElementsHandler":22,"cordova/exec":undefined,"debug":23,"domready":25}],22:[function(_dereq_,module,exports){
+}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{"./MediaDevices":4,"./MediaStream":5,"./MediaStreamTrack":7,"./RTCIceCandidate":12,"./RTCPeerConnection":13,"./RTCRtpTransceiver":16,"./RTCSessionDescription":17,"./enumerateDevices":19,"./getDisplayMedia":20,"./getUserMedia":21,"./stopDisplayMedia":23,"./videoElementsHandler":24,"cordova/exec":undefined,"debug":25,"domready":27}],23:[function(_dereq_,module,exports){
+/**
+ * Expose the stopDisplayMedia function.
+ */
+module.exports = stopDisplayMedia;
+
+/**
+ * Dependencies.
+ */
+var debug = _dereq_('debug')('iosrtc:stopDisplayMedia'),
+	debugerror = _dereq_('debug')('iosrtc:ERROR:stopDisplayMedia'),
+	exec = _dereq_('cordova/exec'),
+	Errors = _dereq_('./Errors');
+
+function stopDisplayMedia() {
+	debug('stopDisplayMedia()');
+
+	return new Promise(function (resolve, reject) {
+		function onResultOK(data) {
+			debug('stopDisplayMedia() | success');
+			resolve();
+		}
+
+		function onResultError(error) {
+			debugerror('stopDisplayMedia() | error:', error);
+			reject(new Errors.MediaStreamError('stopDisplayMedia() failed: ' + error));
+		}
+
+		exec(onResultOK, onResultError, 'iosrtcPlugin', 'stopDisplayMedia', []);
+	});
+}
+
+},{"./Errors":1,"cordova/exec":undefined,"debug":25}],24:[function(_dereq_,module,exports){
 /**
  * Expose a function that must be called when the library is loaded.
  * And also a helper function.
@@ -4506,8 +4678,8 @@ function releaseMediaStreamRenderer(video) {
 	delete video.readyState;
 }
 
-},{"./MediaStreamRenderer":6,"debug":23}],23:[function(_dereq_,module,exports){
-(function (process){(function (){
+},{"./MediaStreamRenderer":6,"debug":25}],25:[function(_dereq_,module,exports){
+(function (process){
 /* eslint-env browser */
 
 /**
@@ -4635,17 +4807,14 @@ function useColors() {
 		return false;
 	}
 
-	let m;
-
 	// Is webkit? http://stackoverflow.com/a/16459606/376773
 	// document is undefined in react-native: https://github.com/facebook/react-native/pull/1632
-	// eslint-disable-next-line no-return-assign
 	return (typeof document !== 'undefined' && document.documentElement && document.documentElement.style && document.documentElement.style.WebkitAppearance) ||
 		// Is firebug? http://stackoverflow.com/a/398120/376773
 		(typeof window !== 'undefined' && window.console && (window.console.firebug || (window.console.exception && window.console.table))) ||
 		// Is firefox >= v31?
 		// https://developer.mozilla.org/en-US/docs/Tools/Web_Console#Styling_messages
-		(typeof navigator !== 'undefined' && navigator.userAgent && (m = navigator.userAgent.toLowerCase().match(/firefox\/(\d+)/)) && parseInt(m[1], 10) >= 31) ||
+		(typeof navigator !== 'undefined' && navigator.userAgent && navigator.userAgent.toLowerCase().match(/firefox\/(\d+)/) && parseInt(RegExp.$1, 10) >= 31) ||
 		// Double check webkit in userAgent just in case we are in a worker
 		(typeof navigator !== 'undefined' && navigator.userAgent && navigator.userAgent.toLowerCase().match(/applewebkit\/(\d+)/));
 }
@@ -4729,7 +4898,7 @@ function save(namespaces) {
 function load() {
 	let r;
 	try {
-		r = exports.storage.getItem('debug') || exports.storage.getItem('DEBUG') ;
+		r = exports.storage.getItem('debug');
 	} catch (error) {
 		// Swallow
 		// XXX (@Qix-) should we be logging these?
@@ -4781,8 +4950,8 @@ formatters.j = function (v) {
 	}
 };
 
-}).call(this)}).call(this,_dereq_('_process'))
-},{"./common":24,"_process":27}],24:[function(_dereq_,module,exports){
+}).call(this,_dereq_('_process'))
+},{"./common":26,"_process":29}],26:[function(_dereq_,module,exports){
 
 /**
  * This is the common logic for both the Node.js and web browser
@@ -4819,7 +4988,7 @@ function setup(env) {
 
 	/**
 	* Selects a color for a debug namespace
-	* @param {String} namespace The namespace string for the debug instance to be colored
+	* @param {String} namespace The namespace string for the for the debug instance to be colored
 	* @return {Number|String} An ANSI color code for the given namespace
 	* @api private
 	*/
@@ -4845,8 +5014,6 @@ function setup(env) {
 	function createDebug(namespace) {
 		let prevTime;
 		let enableOverride = null;
-		let namespacesCache;
-		let enabledCache;
 
 		function debug(...args) {
 			// Disabled?
@@ -4907,17 +5074,7 @@ function setup(env) {
 		Object.defineProperty(debug, 'enabled', {
 			enumerable: true,
 			configurable: false,
-			get: () => {
-				if (enableOverride !== null) {
-					return enableOverride;
-				}
-				if (namespacesCache !== createDebug.namespaces) {
-					namespacesCache = createDebug.namespaces;
-					enabledCache = createDebug.enabled(namespace);
-				}
-
-				return enabledCache;
-			},
+			get: () => enableOverride === null ? createDebug.enabled(namespace) : enableOverride,
 			set: v => {
 				enableOverride = v;
 			}
@@ -4946,67 +5103,28 @@ function setup(env) {
 	*/
 	function enable(namespaces) {
 		createDebug.save(namespaces);
-		createDebug.namespaces = namespaces;
 
 		createDebug.names = [];
 		createDebug.skips = [];
 
-		const split = (typeof namespaces === 'string' ? namespaces : '')
-			.trim()
-			.replace(/\s+/g, ',')
-			.split(',')
-			.filter(Boolean);
+		let i;
+		const split = (typeof namespaces === 'string' ? namespaces : '').split(/[\s,]+/);
+		const len = split.length;
 
-		for (const ns of split) {
-			if (ns[0] === '-') {
-				createDebug.skips.push(ns.slice(1));
+		for (i = 0; i < len; i++) {
+			if (!split[i]) {
+				// ignore empty strings
+				continue;
+			}
+
+			namespaces = split[i].replace(/\*/g, '.*?');
+
+			if (namespaces[0] === '-') {
+				createDebug.skips.push(new RegExp('^' + namespaces.substr(1) + '$'));
 			} else {
-				createDebug.names.push(ns);
+				createDebug.names.push(new RegExp('^' + namespaces + '$'));
 			}
 		}
-	}
-
-	/**
-	 * Checks if the given string matches a namespace template, honoring
-	 * asterisks as wildcards.
-	 *
-	 * @param {String} search
-	 * @param {String} template
-	 * @return {Boolean}
-	 */
-	function matchesTemplate(search, template) {
-		let searchIndex = 0;
-		let templateIndex = 0;
-		let starIndex = -1;
-		let matchIndex = 0;
-
-		while (searchIndex < search.length) {
-			if (templateIndex < template.length && (template[templateIndex] === search[searchIndex] || template[templateIndex] === '*')) {
-				// Match character or proceed with wildcard
-				if (template[templateIndex] === '*') {
-					starIndex = templateIndex;
-					matchIndex = searchIndex;
-					templateIndex++; // Skip the '*'
-				} else {
-					searchIndex++;
-					templateIndex++;
-				}
-			} else if (starIndex !== -1) { // eslint-disable-line no-negated-condition
-				// Backtrack to the last '*' and try to match more characters
-				templateIndex = starIndex + 1;
-				matchIndex++;
-				searchIndex = matchIndex;
-			} else {
-				return false; // No match
-			}
-		}
-
-		// Handle trailing '*' in template
-		while (templateIndex < template.length && template[templateIndex] === '*') {
-			templateIndex++;
-		}
-
-		return templateIndex === template.length;
 	}
 
 	/**
@@ -5017,8 +5135,8 @@ function setup(env) {
 	*/
 	function disable() {
 		const namespaces = [
-			...createDebug.names,
-			...createDebug.skips.map(namespace => '-' + namespace)
+			...createDebug.names.map(toNamespace),
+			...createDebug.skips.map(toNamespace).map(namespace => '-' + namespace)
 		].join(',');
 		createDebug.enable('');
 		return namespaces;
@@ -5032,19 +5150,39 @@ function setup(env) {
 	* @api public
 	*/
 	function enabled(name) {
-		for (const skip of createDebug.skips) {
-			if (matchesTemplate(name, skip)) {
+		if (name[name.length - 1] === '*') {
+			return true;
+		}
+
+		let i;
+		let len;
+
+		for (i = 0, len = createDebug.skips.length; i < len; i++) {
+			if (createDebug.skips[i].test(name)) {
 				return false;
 			}
 		}
 
-		for (const ns of createDebug.names) {
-			if (matchesTemplate(name, ns)) {
+		for (i = 0, len = createDebug.names.length; i < len; i++) {
+			if (createDebug.names[i].test(name)) {
 				return true;
 			}
 		}
 
 		return false;
+	}
+
+	/**
+	* Convert regexp to namespace
+	*
+	* @param {RegExp} regxep
+	* @return {String} namespace
+	* @api private
+	*/
+	function toNamespace(regexp) {
+		return regexp.toString()
+			.substring(2, regexp.toString().length - 2)
+			.replace(/\.\*\?$/, '*');
 	}
 
 	/**
@@ -5076,7 +5214,7 @@ function setup(env) {
 
 module.exports = setup;
 
-},{"ms":26}],25:[function(_dereq_,module,exports){
+},{"ms":28}],27:[function(_dereq_,module,exports){
 /*!
   * domready (c) Dustin Diaz 2014 - License MIT
   */
@@ -5108,7 +5246,7 @@ module.exports = setup;
 
 });
 
-},{}],26:[function(_dereq_,module,exports){
+},{}],28:[function(_dereq_,module,exports){
 /**
  * Helpers.
  */
@@ -5134,7 +5272,7 @@ var y = d * 365.25;
  * @api public
  */
 
-module.exports = function (val, options) {
+module.exports = function(val, options) {
   options = options || {};
   var type = typeof val;
   if (type === 'string' && val.length > 0) {
@@ -5272,7 +5410,7 @@ function plural(ms, msAbs, n, name) {
   return Math.round(ms / n) + ' ' + name + (isPlural ? 's' : '');
 }
 
-},{}],27:[function(_dereq_,module,exports){
+},{}],29:[function(_dereq_,module,exports){
 // shim for using process in browser
 var process = module.exports = {};
 
@@ -5458,7 +5596,7 @@ process.chdir = function (dir) {
 };
 process.umask = function() { return 0; };
 
-},{}],28:[function(_dereq_,module,exports){
+},{}],30:[function(_dereq_,module,exports){
 void function(root){
 
   function defaults(options){
@@ -5504,8 +5642,8 @@ void function(root){
   module.exports.defaults = defaults
 }(this)
 
-},{}],29:[function(_dereq_,module,exports){
-(function (setImmediate,clearImmediate){(function (){
+},{}],31:[function(_dereq_,module,exports){
+(function (setImmediate,clearImmediate){
 var nextTick = _dereq_('process/browser.js').nextTick;
 var apply = Function.prototype.apply;
 var slice = Array.prototype.slice;
@@ -5582,24 +5720,24 @@ exports.setImmediate = typeof setImmediate === "function" ? setImmediate : funct
 exports.clearImmediate = typeof clearImmediate === "function" ? clearImmediate : function(id) {
   delete immediateIds[id];
 };
-}).call(this)}).call(this,_dereq_("timers").setImmediate,_dereq_("timers").clearImmediate)
-},{"process/browser.js":27,"timers":29}],30:[function(_dereq_,module,exports){
+}).call(this,_dereq_("timers").setImmediate,_dereq_("timers").clearImmediate)
+},{"process/browser.js":29,"timers":31}],32:[function(_dereq_,module,exports){
 module.exports =
 {
 	EventTarget : _dereq_('./lib/EventTarget'),
 	Event       : _dereq_('./lib/Event')
 };
 
-},{"./lib/Event":31,"./lib/EventTarget":32}],31:[function(_dereq_,module,exports){
-(function (global){(function (){
+},{"./lib/Event":33,"./lib/EventTarget":34}],33:[function(_dereq_,module,exports){
+(function (global){
 /**
  * In browsers export the native Event interface.
  */
 
 module.exports = global.Event;
 
-}).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],32:[function(_dereq_,module,exports){
+}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{}],34:[function(_dereq_,module,exports){
 function yaetiEventTarget()
 {
 	this._listeners = {};
@@ -5734,5 +5872,5 @@ yaetiEventTarget.prototype.dispatchEvent = function(event)
 
 module.exports = yaetiEventTarget;
 
-},{}]},{},[21])(21)
+},{}]},{},[22])(22)
 });

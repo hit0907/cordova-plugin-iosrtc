@@ -2,6 +2,7 @@ import Foundation
 import AVFoundation
 import WebRTC
 import ReplayKit
+import BroadcastScreenCapture
 
 
 @objc(iosrtcPlugin) // This class must be accesible from Objective-C.
@@ -25,7 +26,7 @@ class iosrtcPlugin : CDVPlugin {
 	
 	// Screen capture properties
 	private var notificationCenter: CFNotificationCenter?
-	private var screenCapturer: RTCVideoCapturer?
+	private var screenCapturer: BroadcastScreenCapturer?
 	private var screenTrack: RTCVideoTrack?
 	private var screenStreamCallbackId: String?
 	private var isScreenBroadcasting = false
@@ -1242,8 +1243,22 @@ class iosrtcPlugin : CDVPlugin {
 		
 		// Create a video source and track
 		let videoSource = self.rtcPeerConnectionFactory.videoSource()
+        
+        let screenCapturer = BroadcastScreenCapturer.init(delegate: videoSource)
+        self.screenCapturer = screenCapturer
+        screenCapturer.startCapture()
+        
 		let videoTrack = self.rtcPeerConnectionFactory.videoTrack(with: videoSource, trackId: UUID().uuidString)
 		self.screenTrack = videoTrack
+        
+//        let appExtension = Bundle.main.infoDictionary![kRTCScreenSharingExtension] as! String
+//        let picker = RPSystemBroadcastPickerView()
+//        picker.preferredExtension = appExtension
+//        picker.showsMicrophoneButton = false
+//        let selector = NSSelectorFromString("buttonPressed:")
+//        if (picker.responds(to: selector)) {
+//            picker.perform(selector, with: nil)
+//        }
 		
 		rtcMediaStream.addVideoTrack(videoTrack)
 		
@@ -1271,33 +1286,17 @@ class iosrtcPlugin : CDVPlugin {
 		responseData["stream"] = streamJSON
 		
 		let result = CDVPluginResult(status: CDVCommandStatus_OK, messageAs: responseData)
-		self.emit(command.callbackId, result: result)
+        self.emit(command.callbackId, result: result!)
 		
 		// Show system broadcast picker for actual screen capture
-		DispatchQueue.main.async {
-			if let appExtension = Bundle.main.infoDictionary?["RTCScreenSharingExtension"] as? String {
-				let picker = RPSystemBroadcastPickerView()
-				picker.preferredExtension = appExtension
-				picker.showsMicrophoneButton = false
-				
-				// Add the picker to the view hierarchy temporarily
-				if let rootView = self.viewController?.view {
-					rootView.addSubview(picker)
-					picker.frame = CGRect(x: 0, y: 0, width: 44, height: 44)
-					
-					// Simulate button press
-					let selector = NSSelectorFromString("buttonPressed:")
-					if picker.responds(to: selector) {
-						picker.perform(selector, with: nil)
-					}
-					
-					// Remove the picker after a short delay
-					DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-						picker.removeFromSuperview()
-					}
-				}
-			}
-		}
+        let appExtension = Bundle.main.infoDictionary![kRTCScreenSharingExtension] as! String
+        let picker = RPSystemBroadcastPickerView()
+        picker.preferredExtension = appExtension
+        picker.showsMicrophoneButton = false
+        let selector = NSSelectorFromString("buttonPressed:")
+        if (picker.responds(to: selector)) {
+            picker.perform(selector, with: nil)
+        }
 	}
 
 	@objc(stopDisplayMedia:) func stopDisplayMedia(_ command: CDVInvokedUrlCommand) {
@@ -1307,7 +1306,7 @@ class iosrtcPlugin : CDVPlugin {
 		
 		// Send success result
 		let result = CDVPluginResult(status: CDVCommandStatus_OK)
-		self.emit(command.callbackId, result: result)
+        self.emit(command.callbackId, result: result!)
 		
 		// Clear callback reference
 		self.screenStreamCallbackId = nil
@@ -1530,7 +1529,7 @@ class iosrtcPlugin : CDVPlugin {
 		// Create RTCMediaStream with screen capture track
 		guard let screenTrack = self.screenTrack else {
 			let errorResult = CDVPluginResult(status: CDVCommandStatus_ERROR, messageAs: "Screen track not available")
-			self.emit(self.screenStreamCallbackId!, result: errorResult)
+            self.emit(self.screenStreamCallbackId!, result: errorResult!)
 			return
 		}
 		
@@ -1560,7 +1559,7 @@ class iosrtcPlugin : CDVPlugin {
 		var responseData: [String: Any] = [:]
 		responseData["stream"] = streamJSON
 		
-		let result = CDVPluginResult(status: CDVCommandStatus_OK, messageAs: responseData)
+        let result = CDVPluginResult(status: CDVCommandStatus_OK, messageAs: responseData)!
 		self.emit(self.screenStreamCallbackId!, result: result)
 	}
 	
@@ -1574,7 +1573,7 @@ class iosrtcPlugin : CDVPlugin {
 		let result = CDVPluginResult(status: CDVCommandStatus_OK, messageAs: message)
 		result?.keepCallback = true
 		if let callbackId = self.screenStreamCallbackId {
-			self.emit(callbackId, result: result)
+            self.emit(callbackId, result: result!)
 		}
 	}
 	
