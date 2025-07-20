@@ -3447,6 +3447,13 @@ function getDisplayMedia(constraints) {
 		function onResultOK(data) {
 			debug('getDisplayMedia() | success');
 			var stream = MediaStream.create(data.stream);
+			const videoTrack = stream.getVideoTracks()[0];
+			const originalStop = videoTrack.stop;
+			videoTrack.stop = function () {
+				debug('getDisplayMedia() | stream.getVideoTracks()[0].stop() called');
+				originalStop.call(videoTrack);
+				exec(null, null, 'iosrtcPlugin', 'stopDisplayMedia', []);
+			};
 			resolve(stream);
 		}
 

@@ -20,7 +20,7 @@ let kRTCScreenSharingExtension = "RTCScreenSharingExtension"
  */
 
 class PluginGetDisplayMedia {
-
+	private static var shared = PluginGetDisplayMedia?
 	var rtcPeerConnectionFactory: RTCPeerConnectionFactory
 	private var screenCapturer: BroadcastScreenCapturer?
 	private var screenTrack: RTCVideoTrack?
@@ -41,52 +41,18 @@ class PluginGetDisplayMedia {
 		
 		// Listen for screen capture start and stop events from broadcast extension
 		self.listenNotification("iOS_BroadcastStarted" as CFString, callback: { center, observer, name, object, info in
-			// Handle broadcast started
-            NSLog("PluginGetDisplayMedia | Broadcast started")
-			
-			// Get the instance from the observer
-			if let self = Unmanaged<PluginGetDisplayMedia>.fromOpaque(observer!).takeUnretained().takeUnretainedValue() {
-				// Create PluginMediaStream and complete the call
-				guard let rtcMediaStream = self.pendingRtcMediaStream,
-					  let callback = self.pendingCallback,
-					  let eventListenerForNewStream = self.pendingEventListenerForNewStream else {
-					NSLog("PluginGetDisplayMedia | Missing pending data for broadcast started")
-					return
-				}
-				
-				let pluginMediaStream = PluginMediaStream(rtcMediaStream: rtcMediaStream)
-				pluginMediaStream.run()
-				
-				// Let the plugin store it in its dictionary
-				eventListenerForNewStream(pluginMediaStream)
-				
-				// Send success callback with stream data
-				callback([
-					"stream": pluginMediaStream.getJSON()
-				])
-				
-				// Clear pending data
-				self.pendingCallback = nil
-				self.pendingErrback = nil
-				self.pendingEventListenerForNewStream = nil
-				self.pendingRtcMediaStream = nil
-			}
+			DispatchQueue.main.async {
+                PluginGetDisplayMedia.shared?.onBroadcastStarted()
+            }
 		})
 		self.listenNotification("iOS_BroadcastStopped" as CFString, callback: { center, observer, name, object, info in
 			// Handle broadcast stopped
-            NSLog("PluginGetDisplayMedia | Broadcast stopped")
-
-            // Get the instance from the observer
-            if let self = Unmanaged<PluginGetDisplayMedia>.fromOpaque(observer!).takeUnretained().takeUnretainedValue() {
-				// If we have pending callbacks, this means broadcast was stopped before it started
-				if let errback = self.pendingErrback {
-					errback("Screen capture was cancelled")
-				}
-				
-				// Cleanup screen capture resources
-                self.cleanupScreenCapture()
+			DispatchQueue.main.async {
+                PluginGetDisplayMedia.shared?.onBroadcastStopped()
             }
 		})
+
+		PluginGetDisplayMedia.shared = self
 	}
 
 	deinit {
@@ -190,5 +156,46 @@ class PluginGetDisplayMedia {
 			nil,
 			CFNotificationSuspensionBehavior.deliverImmediately
 		)
+	}
+	
+	private func onBroadcastStarted() {
+		NSLog("PluginGetDisplayMedia | onBroadcastStarted()")
+		
+		// Create PluginMediaStream and complete the call
+		guard let rtcMediaStream = self.pendingRtcMediaStream,
+			  let callback = self.pendingCallback,
+			  let eventListenerForNewStream = self.pendingEventListenerForNewStream else {
+			NSLog("PluginGetDisplayMedia | Missing pending data for broadcast started")
+			return
+		}
+		
+		let pluginMediaStream = PluginMediaStream(rtcMediaStream: rtcMediaStream)
+		pluginMediaStream.run()
+		
+		// Let the plugin store it in its dictionary
+		eventListenerForNewStream(pluginMediaStream)
+		
+		// Send success callback with stream data
+		callback([
+			"stream": pluginMediaStream.getJSON()
+		])
+		
+		// Clear pending data
+		self.pendingCallback = nil
+		self.pendingErrback = nil
+		self.pendingEventListenerForNewStream = nil
+		self.pendingRtcMediaStream = nil
+	}
+	
+	private func onBroadcastStopped() {
+		NSLog("PluginGetDisplayMedia | onBroadcastStopped()")
+		
+		// If we have pending callbacks, this means broadcast was stopped before it started
+		if let errback = self.pendingErrback {
+			errback("Screen capture was cancelled")
+		}
+		
+		// Cleanup screen capture resources
+		self.cleanupScreenCapture()
 	}
 }
