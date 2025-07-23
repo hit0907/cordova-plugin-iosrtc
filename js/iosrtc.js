@@ -27,7 +27,8 @@ var // Dictionary of MediaStreamRenderers.
 	MediaStream = require('./MediaStream'),
 	{ MediaStreamTrack } = require('./MediaStreamTrack'),
 	videoElementsHandler = require('./videoElementsHandler'),
-	{ RTCRtpTransceiver } = require('./RTCRtpTransceiver');
+	{ RTCRtpTransceiver } = require('./RTCRtpTransceiver'),
+	AudioMeter = require('./AudioMeter');
 
 /**
  * Expose the iosrtc object.
@@ -45,6 +46,9 @@ module.exports = {
 	MediaDevices: MediaDevices,
 	MediaStream: MediaStream,
 	MediaStreamTrack: MediaStreamTrack,
+
+	// Expose AudioMeter plugin
+	AudioMeter: AudioMeter,
 
 	// Expose a function to refresh current videos rendering a MediaStream.
 	refreshVideos: videoElementsHandler.refreshVideos,

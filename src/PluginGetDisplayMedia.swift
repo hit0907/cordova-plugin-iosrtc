@@ -20,7 +20,7 @@ let kRTCScreenSharingExtension = "RTCScreenSharingExtension"
  */
 
 class PluginGetDisplayMedia {
-	private static var shared = PluginGetDisplayMedia?
+    private static var shared: PluginGetDisplayMedia?
 	var rtcPeerConnectionFactory: RTCPeerConnectionFactory
 	private var screenCapturer: BroadcastScreenCapturer?
 	private var screenTrack: RTCVideoTrack?
@@ -62,9 +62,9 @@ class PluginGetDisplayMedia {
 
 	func call(
 		_ constraints: NSDictionary,
-		callback: (_ data: NSDictionary) -> Void,
-		errback: (_ error: String) -> Void,
-		eventListenerForNewStream: (_ pluginMediaStream: PluginMediaStream) -> Void
+        callback: @escaping (_ data: NSDictionary) -> Void,
+        errback: @escaping (_ error: String) -> Void,
+        eventListenerForNewStream: @escaping (_ pluginMediaStream: PluginMediaStream) -> Void
 	) {
 
 		NSLog("PluginGetDisplayMedia#call()")

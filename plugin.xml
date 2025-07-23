@@ -27,6 +27,9 @@
 				<param name="ios-package" value="iosrtcPlugin" />
 				<param name="onload" value="true" />
 			</feature>
+			<feature name="AudioMeterPlugin">
+				<param name="ios-package" value="AudioMeterPlugin" />
+			</feature>
 		</config-file>
 
 		<preference name="MANUAL_INIT_AUDIO_DEVICE" default="FALSE"/>
@@ -57,6 +60,8 @@
 			<clobbers target="cordova.plugins.iosrtc" />
 		</js-module>
 
+		<!-- Bridging header for using ObjetiveC libraries in Swift -->
+		<header-file src="src/cordova-plugin-iosrtc-Bridging-Header.h" />
 
 		<!-- Project source files -->
 		<source-file src="src/iosrtcPlugin.swift" />
@@ -81,6 +86,7 @@
 		<source-file src="src/PluginRTCRtpParameters.swift" />
 		<source-file src="src/PluginRTCRtpCodecParameters.swift" />
 		<source-file src="src/PluginRTCRtpEncodingParameters.swift" />
+		<source-file src="src/AudioMeterPlugin.swift" />
 
 		<!-- iOS shared dependencies -->
 		<framework src="AVFoundation.framework" />
@@ -102,14 +108,15 @@
 		<framework src="VideoToolbox.framework" />
 
 		<!-- WebRTC library -->
-		<podspec>
+		<framework src="lib/WebRTC.xcframework" custom="true" embed="true" />
+		<!-- <podspec>
 			<config>
 				<source url="https://cdn.cocoapods.org/"/>
 			</config>
 			<pods use-frameworks="true">
 				<pod name="GoogleWebRTC" />
 			</pods>
-		</podspec>
+		</podspec> -->
 	</platform>
 
 </plugin>

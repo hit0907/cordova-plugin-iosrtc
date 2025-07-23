@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Audio Meter Example</title>
+		<style>
+			body {
+				font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+				margin: 20px;
+				background-color: #f5f5f5;
+			}
+
+			.container {
+				max-width: 600px;
+				margin: 0 auto;
+				background: white;
+				padding: 20px;
+				border-radius: 10px;
+				box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+			}
+
+			h1 {
+				color: #333;
+				text-align: center;
+				margin-bottom: 30px;
+			}
+
+			/* Audio Meter Styles */
+			.audio-meter-container {
+				margin: 20px 0;
+				padding: 20px;
+				background: #f8f9fa;
+				border-radius: 8px;
+				border: 2px solid #e9ecef;
+			}
+
+			.meter-header {
+				display: flex;
+				justify-content: space-between;
+				align-items: center;
+				margin-bottom: 15px;
+			}
+
+			.track-info {
+				font-weight: 600;
+				color: #495057;
+			}
+
+			.volume-value {
+				font-size: 18px;
+				font-weight: bold;
+				color: #007bff;
+				min-width: 60px;
+				text-align: right;
+			}
+
+			.volume-bar-container {
+				position: relative;
+				height: 30px;
+				background: #e9ecef;
+				border-radius: 15px;
+				overflow: hidden;
+				border: 1px solid #dee2e6;
+			}
+
+			.volume-bar {
+				height: 100%;
+				background: linear-gradient(90deg, #28a745 0%, #ffc107 70%, #dc3545 90%);
+				border-radius: 15px;
+				transition: width 0.1s ease-out;
+				width: 1%;
+				position: relative;
+			}
+
+			.volume-bar::after {
+				content: '';
+				position: absolute;
+				right: -2px;
+				top: 0;
+				bottom: 0;
+				width: 4px;
+				background: rgba(255, 255, 255, 0.8);
+				border-radius: 2px;
+			}
+
+			/* Controls */
+			.controls {
+				display: flex;
+				gap: 10px;
+				justify-content: center;
+				margin: 20px 0;
+			}
+
+			button {
+				padding: 12px 24px;
+				border: none;
+				border-radius: 6px;
+				background: #007bff;
+				color: white;
+				font-size: 14px;
+				font-weight: 600;
+				cursor: pointer;
+				transition: background-color 0.2s;
+			}
+
+			button:hover {
+				background: #0056b3;
+			}
+
+			button:disabled {
+				background: #6c757d;
+				cursor: not-allowed;
+			}
+
+			button.danger {
+				background: #dc3545;
+			}
+
+			button.danger:hover {
+				background: #c82333;
+			}
+
+			/* Track ID Input */
+			.track-input {
+				margin: 20px 0;
+			}
+
+			.track-input label {
+				display: block;
+				margin-bottom: 5px;
+				font-weight: 600;
+				color: #495057;
+			}
+
+			.track-input input {
+				width: 100%;
+				padding: 10px;
+				border: 2px solid #e9ecef;
+				border-radius: 6px;
+				font-size: 14px;
+				box-sizing: border-box;
+			}
+
+			.track-input input:focus {
+				outline: none;
+				border-color: #007bff;
+			}
+
+			/* Status Messages */
+			.status {
+				margin: 15px 0;
+				padding: 10px;
+				border-radius: 6px;
+				font-size: 14px;
+			}
+
+			.status.success {
+				background: #d4edda;
+				color: #155724;
+				border: 1px solid #c3e6cb;
+			}
+
+			.status.error {
+				background: #f8d7da;
+				color: #721c24;
+				border: 1px solid #f5c6cb;
+			}
+
+			.status.info {
+				background: #cce7ff;
+				color: #004085;
+				border: 1px solid #b3d7ff;
+			}
+
+			/* Instructions */
+			.instructions {
+				background: #f8f9fa;
+				padding: 15px;
+				border-radius: 6px;
+				border-left: 4px solid #007bff;
+				margin-bottom: 20px;
+			}
+
+			.instructions h3 {
+				margin-top: 0;
+				color: #495057;
+			}
+
+			.instructions ol {
+				margin-bottom: 0;
+			}
+
+			.instructions li {
+				margin-bottom: 5px;
+			}
+		</style>
+	</head>
+	<body>
+		<div class="container">
+			<h1>Audio Meter Example</h1>
+
+			<div class="instructions">
+				<h3>Instructions:</h3>
+				<ol>
+					<li>Establish a WebRTC connection and receive remote audio tracks</li>
+					<li>Get the track ID from your remote audio track</li>
+					<li>Enter the track ID below and click "Start Metering"</li>
+					<li>The volume meter will show real-time audio levels (1-100)</li>
+				</ol>
+			</div>
+
+			<div class="track-input">
+				<label for="trackIdInput">Remote Audio Track ID:</label>
+				<input
+					type="text"
+					id="trackIdInput"
+					placeholder="Enter track ID (e.g., remote-audio-track-1)"
+					value=""
+				/>
+			</div>
+
+			<div class="controls">
+				<button id="startBtn" onclick="startAudioMeter()">Start Metering</button>
+				<button id="stopBtn" onclick="stopAudioMeter()" disabled>Stop Metering</button>
+				<button id="stopAllBtn" onclick="stopAllMetering()" class="danger">Stop All</button>
+			</div>
+
+			<div id="statusDiv"></div>
+
+			<div class="audio-meter-container" id="meterContainer" style="display: none">
+				<div class="meter-header">
+					<div class="track-info">Track: <span id="currentTrackId">-</span></div>
+					<div class="volume-value" id="volumeValue">0</div>
+				</div>
+				<div class="volume-bar-container">
+					<div class="volume-bar" id="volumeBar"></div>
+				</div>
+			</div>
+		</div>
+
+		<!-- Cordova Script -->
+		<script type="text/javascript" src="cordova.js"></script>
+
+		<!-- Audio Meter Plugin -->
+		<script type="text/javascript" src="js/AudioMeter.js"></script>
+
+		<script type="text/javascript">
+			let currentTrackId = null;
+			let isMetering = false;
+
+			// Wait for device ready
+			document.addEventListener(
+				'deviceready',
+				function () {
+					showStatus('Device ready. You can now start audio metering.', 'info');
+				},
+				false
+			);
+
+			function showStatus(message, type = 'info') {
+				const statusDiv = document.getElementById('statusDiv');
+				statusDiv.innerHTML = `<div class="status ${type}">${message}</div>`;
+
+				// Auto-hide status after 5 seconds unless it's an error
+				if (type !== 'error') {
+					setTimeout(() => {
+						statusDiv.innerHTML = '';
+					}, 5000);
+				}
+			}
+
+			function updateVolumeUI(data) {
+				const volumeBar = document.getElementById('volumeBar');
+				const volumeValue = document.getElementById('volumeValue');
+				const meterContainer = document.getElementById('meterContainer');
+				const currentTrackIdSpan = document.getElementById('currentTrackId');
+
+				// Show the meter container
+				meterContainer.style.display = 'block';
+
+				// Update track ID
+				currentTrackIdSpan.textContent = data.trackId;
+
+				// Update volume value
+				volumeValue.textContent = data.volumeLevel;
+
+				// Update volume bar width (1-100 maps to 1%-100%)
+				const percentage = Math.max(1, Math.min(100, data.volumeLevel));
+				volumeBar.style.width = percentage + '%';
+			}
+
+			function startAudioMeter() {
+				const trackIdInput = document.getElementById('trackIdInput');
+				const trackId = trackIdInput.value.trim();
+
+				if (!trackId) {
+					showStatus('Please enter a track ID', 'error');
+					return;
+				}
+
+				if (!window.AudioMeter) {
+					showStatus(
+						'AudioMeter plugin not available. Make sure you are running on a device with the plugin installed.',
+						'error'
+					);
+					return;
+				}
+
+				showStatus('Starting audio metering...', 'info');
+
+				AudioMeter.startMetering(
+					trackId,
+					function (result) {
+						if (result.volumeLevel !== undefined) {
+							// Volume level update
+							updateVolumeUI(result);
+						}
+					},
+					function (error) {
+						showStatus('Error starting audio meter: ' + error, 'error');
+						resetUI();
+					}
+				);
+
+				// Update UI state
+				currentTrackId = trackId;
+				isMetering = true;
+				document.getElementById('startBtn').disabled = true;
+				document.getElementById('stopBtn').disabled = false;
+				trackIdInput.disabled = true;
+
+				showStatus(`Audio metering started for track: ${trackId}`, 'success');
+			}
+
+			function stopAudioMeter() {
+				if (!currentTrackId || !isMetering) {
+					return;
+				}
+
+				AudioMeter.stopMetering(
+					currentTrackId,
+					function (result) {
+						showStatus('Audio metering stopped', 'success');
+						resetUI();
+					},
+					function (error) {
+						showStatus('Error stopping audio meter: ' + error, 'error');
+					}
+				);
+			}
+
+			function stopAllMetering() {
+				AudioMeter.stopAllMetering(
+					function (result) {
+						showStatus('All audio metering stopped', 'success');
+						resetUI();
+					},
+					function (error) {
+						showStatus('Error stopping all audio meters: ' + error, 'error');
+					}
+				);
+			}
+
+			function resetUI() {
+				// Reset state
+				currentTrackId = null;
+				isMetering = false;
+
+				// Reset buttons
+				document.getElementById('startBtn').disabled = false;
+				document.getElementById('stopBtn').disabled = true;
+				document.getElementById('trackIdInput').disabled = false;
+
+				// Hide meter
+				document.getElementById('meterContainer').style.display = 'none';
+
+				// Reset meter values
+				document.getElementById('volumeBar').style.width = '1%';
+				document.getElementById('volumeValue').textContent = '0';
+			}
+
+			// Handle page unload - cleanup
+			window.addEventListener('beforeunload', function () {
+				if (isMetering && window.AudioMeter) {
+					AudioMeter.stopAllMetering();
+				}
+			});
+		</script>
+	</body>
+</html>
